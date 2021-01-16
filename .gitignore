@@ -1,0 +1,10 @@
+# Ignore
+*.csv
+*.xlsx
+*.DS_Store
+*.geojson
+/__pycache__
+/.ipynb_checkpoints
+config.py
+*.ipynb
+*.py
