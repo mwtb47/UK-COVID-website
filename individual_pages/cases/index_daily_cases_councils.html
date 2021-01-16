@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <title>COVID-19 Cases</title>
+  </head>
+
+  <!-- Styles-->
+  <style>
+  html, body {
+    margin:0;
+    padding:0;
+  }
+  .aligncenter {
+      text-align: center;
+  }
+  p.a {
+    margin-left: 8%;
+    margin-right: 8%;
+    font-family: Arial;
+    font-size: 18px;
+    color: rgb(60,60,60)
+  }
+  .header {
+    padding: 20px;
+    text-align: center;
+    background: rgb(40,40,140);
+    color: white;
+    font-family: Arial;
+    font-size: 30px;
+  }
+  .header_buttons {
+    text-align: center;
+    background: rgb(40,40,140);
+    color: white;
+    font-family: Arial;
+    font-size: 16px;
+  }
+  .header_2 {
+    padding: 15px 0px 2px 0px;
+    text-align: center;
+    background: rgb(200,220,240);
+    color: rgb(50,50,70);
+    font-family: Arial;
+    font-size: 30px;
+  }
+  .header_date {
+    padding: 0px 0px 15px 0px;
+    text-align: center;
+    background: rgb(200,220,240);
+    color: rgb(50,50,70);
+    font-family: Arial;
+    font-size: 14px;
+  }
+  .hyperlink{
+    color: white;
+    font-family: Arial;
+    text-decoration: none;
+  }
+  .footer{
+    position: fixed;
+    bottom: 0px;
+    width: 100%;
+    padding: 7px;
+    text-align: center;
+    background: rgba(20,20,130,0.9);
+    color: white;
+    font-family: Arial;
+    font-size: 15px;
+  }
+
+  hr {
+    width: 90%;
+    height: 1px;
+    background-color: rgb(200,200,200);
+  }
+
+  .dropbtn {
+    background-color: rgb(40,40,140);
+    color: rgb(40,40,140);
+    padding: 8px;
+    font-size: 16px;
+    border: none;
+  }
+  .dropdown {
+    font-size: 16px;
+    position: relative;
+    background-color: rgb(40,40,140);
+    display: inline-block;
+  }
+  .dropdown-content {
+    text-align: left;
+    display: none;
+    position: absolute;
+    background-color: rgb(240,240,240);
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+  }
+  .dropdown-content a {
+    background-color: rgb(245,245,245);
+    color: rgb(40,40,140);
+    padding: 12px 16px;
+    font-size: 14px;
+    text-decoration: none;
+    display: block;
+  }
+  .dropdown-content a:hover {background-color: rgba(220,220,220,0.9);}
+  .dropdown:hover .dropdown-content {display: block;}
+  .dropdown:hover .dropbtn {background-color: rgb(40,40,140);}
+  </style>
+
+  <!-- Document-->
+
+  <script>
+  n =  new Date(document.lastModified);
+  y = n.getFullYear();
+  m = n.getMonth() + 1;
+  d = n.getDate();
+  </script>
+
+  <div class="header_buttons">
+    <div class="dropdown">
+      <button class="dropbtn"><a href="/UK-COVID-website/index.html" class=hyperlink>Home</a></button>
+    </div>
+
+    &emsp;
+
+    <div class="dropdown">
+      <button class="dropbtn"><a class=hyperlink>Cases</a></button>
+      <div class="dropdown-content">
+        <a href="/UK-COVID-website/individual_pages/cases/index_daily_cases_uk.html" class=hyperlink>UK</a>
+        <a href="/UK-COVID-website/individual_pages/cases/index_daily_cases_regions.html" class=hyperlink>Regions - England</a>
+        <a href="/UK-COVID-website/individual_pages/cases/index_daily_cases_councils.html" class=hyperlink>Councils - England</a>
+      </div>
+    </div>
+
+    &emsp;
+
+    <div class="dropdown">
+      <button class="dropbtn"><a class=hyperlink>Deaths</a></button>
+      <div class="dropdown-content">
+        <a href="/UK-COVID-website/individual_pages/deaths/index_daily_deaths_uk.html" class=hyperlink>UK</a>
+        <a href="/UK-COVID-website/individual_pages/deaths/index_daily_deaths_regions.html" class=hyperlink>Regions - England</a>
+      </div>
+    </div>
+
+    &emsp;
+
+    <div class="dropdown">
+      <button class="dropbtn"><a class=hyperlink>Hospital Admissions</a></button>
+      <div class="dropdown-content">
+        <a href="/UK-COVID-website/individual_pages/admissions/index_admissions_uk.html" class=hyperlink>UK</a>
+      </div>
+    </div>
+
+    &emsp;
+
+    <div class="dropdown">
+      <button class="dropbtn"><a class=hyperlink>Vaccination</a></button>
+      <div class="dropdown-content">
+        <a href="/UK-COVID-website/individual_pages/vaccine/index_vaccine.html" class=hyperlink>Total</a>
+      </div>
+    </div>
+
+    &emsp;
+
+    <div class="dropdown">
+      <button class="dropbtn"><a class=hyperlink>Other Data</a></button>
+      <div class="dropdown-content">
+        <a href="https://mwtb47.github.io/COVID-website/" class=hyperlink>Global</a>
+        <a href="https://mwtb47.github.io/Sweden-COVID-website/" class=hyperlink>Sweden</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="header_2">
+    <a>Daily Cases</a>
+  </div>
+
+  <div class="header_date">
+    <i style="font-size:15px">Updated <script>document.write(y + "/" + m + "/" + d);</script></i>
+  </div>
+
+  <h3 style="margin-left:8%; font-family:Arial; color:rgb(60,60,60) ">Cases</h3>
+  <p class="a">
+    A case is an individual who has tested positive for the SARS-CoV-2 virus. If
+    someone tests positive more than once in a 7 day period, they are only
+    counted once. The date of the case is reported in two ways:
+    <br> - specimen date (date of the test)
+    <br> - published date (date the test result is included in totals)
+    <br>
+    <br>
+    More information about the reporting of cases can be found
+    <a style="color:rgb(70,70,150)" href="https://coronavirus.data.gov.uk/details/about-data#daily-and-cumulative-numbers-of-cases">here</a>.
+  </p>
+
+  <hr>
+
+  <p class="aligncenter">
+      <embed type="text/html" src="/UK-COVID-website/graphs/cases/cases_local_area.html" width="90%" height="700">
+  </p>
+
+  <div class="footer">
+    <a>Contact: mwt.barnes@outlook.com</a>
+  </div>
+
+</html>
