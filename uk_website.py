@@ -5,15 +5,14 @@
 # Contact: mwt.barnes@outlook.com
 # =============================================================================
 
+import datetime
+
 from bs4 import BeautifulSoup
 import config
-import datetime
-import json
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import requests
 
 # --------------
 # Graph template
@@ -50,11 +49,11 @@ template=dict(
 # date, and deaths.
 # =============================================================================
 
-uk_url = "https://api.coronavirus.data.gov.uk/v2/data?areaType=overview" \
-         "&metric=newAdmissions" \
-         "&metric=newCasesByPublishDate" \
-         "&metric=newCasesBySpecimenDate" \
-         "&metric=newDeaths28DaysByDeathDate&format=csv"
+uk_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=overview"
+          "&metric=newAdmissions"
+          "&metric=newCasesByPublishDate"
+          "&metric=newCasesBySpecimenDate"
+          "&metric=newDeaths28DaysByDeathDate&format=csv")
 
 uk = pd.read_csv(uk_url)
 uk['date'] = pd.to_datetime(uk['date'], format='%Y-%m-%d')
@@ -73,20 +72,21 @@ population = pd.read_excel('data/uk_population.xlsx',
 uk_cases = uk[uk['date'] >= '2020-01-28'][
     ['date', 'newCasesBySpecimenDate', 'newCasesByPublishDate']].copy()
 
+uk_cases.columns = ['date', 'specimen', 'publish']
+
 # 7 day rolling averages for daily cases by specimen date and publish date
-uk_cases['7_day_specimen'] = uk_cases['newCasesBySpecimenDate'].rolling(window=7).mean()
-uk_cases['7_day_publish'] = uk_cases['newCasesByPublishDate'].rolling(window=7).mean()
+uk_cases['specimen_7_day'] = uk_cases['specimen'].rolling(window=7).mean()
+uk_cases['publish_7_day'] = uk_cases['publish'].rolling(window=7).mean()
 
 # Thousand comma separated strings to be displayed in labels on graphs for
 # easier reading.
-uk_cases['newCasesBySpecimenDate_str'] = \
-    uk_cases['newCasesBySpecimenDate'].apply(lambda x: "{:,}".format(x))
-uk_cases['newCasesByPublishDate_str'] = \
-    uk_cases['newCasesByPublishDate'].apply(lambda x: "{:,}".format(x))
-uk_cases['7_day_specimen_str'] = \
-    uk_cases['7_day_specimen'].apply(lambda x: "{:,}".format(round(x, 2)))
-uk_cases['7_day_publish_str'] = \
-    uk_cases['7_day_publish'].apply(lambda x: "{:,}".format(round(x, 2)))
+uk_cases['specimen_str'] = uk_cases['specimen'].apply(
+    lambda x: "{:,}".format(x))
+uk_cases['publish_str'] = uk_cases['publish'].apply(lambda x: "{:,}".format(x))
+uk_cases['specimen_7_day_str'] = uk_cases['specimen_7_day'].apply(
+    lambda x: "{:,}".format(round(x, 2)))
+uk_cases['publish_7_day_str'] = uk_cases['publish_7_day'].apply(
+    lambda x: "{:,}".format(round(x, 2)))
 
 # ------------------------
 # Graph - daily cases UK
@@ -99,12 +99,12 @@ fig = go.Figure()
 fig.add_trace(
     go.Scatter(
         x=list(uk_cases['date']),
-        y=list(uk_cases['7_day_publish']),
+        y=list(uk_cases['publish_7_day']),
         marker=dict(color='rgb(150, 65, 65)'),
         showlegend=False,
         customdata=np.stack((
-            uk_cases['7_day_publish_str'], 
-            uk_cases['newCasesByPublishDate_str']
+            uk_cases['publish_7_day_str'], 
+            uk_cases['publish_str']
         ), axis=-1),
         hoverlabel=dict(
             bgcolor='white',
@@ -125,7 +125,7 @@ fig.add_trace(
 fig.add_trace(
     go.Bar(
         x=list(uk_cases['date']),
-        y=list(uk_cases['newCasesByPublishDate']),
+        y=list(uk_cases['publish']),
         marker=dict(color='rgb(200, 200, 200)'),
         showlegend=False,
         hoverinfo='skip'
@@ -136,13 +136,13 @@ fig.add_trace(
 fig.add_trace(
     go.Scatter(
         x=list(uk_cases['date']),
-        y=list(uk_cases['7_day_specimen']),
+        y=list(uk_cases['specimen_7_day']),
         marker=dict(color='rgb(150, 65, 65)'),
         showlegend=False,
         visible=False,
         customdata=np.stack((
-            uk_cases['7_day_specimen_str'], 
-            uk_cases['newCasesBySpecimenDate_str']
+            uk_cases['specimen_7_day_str'], 
+            uk_cases['specimen_str']
         ), axis=-1),
         hoverlabel=dict(
             bgcolor='white',
@@ -163,7 +163,7 @@ fig.add_trace(
 fig.add_trace(
     go.Bar(
         x=list(uk_cases['date']),
-        y=list(uk_cases['newCasesBySpecimenDate']),
+        y=list(uk_cases['specimen']),
         marker=dict(color='rgb(200, 200, 200)'),
         showlegend=False,
         visible=False,
@@ -174,9 +174,7 @@ fig.add_trace(
 fig.update_layout(
     template=template,
     title="<b>Daily Cases by Published Date</b><br><sup>7 day average",
-    yaxis=dict(
-        title="Daily Cases",
-    ),
+    yaxis_title="Daily Cases",
     annotations=[
         dict(
             x=0, y=-0.1,
@@ -205,11 +203,13 @@ fig.update_layout(
                 dict(label="Published",
                      method='update',
                      args=[{'visible': [True, True, False, False]},
-                           {'title': "<b>Daily Cases by Published Date</b><br><sup>7 day average"}]),
+                           {'title': ("<b>Daily Cases by Published Date</b>"
+                                      "<br><sup>7 day average")}]),
                 dict(label="Specimen",
                      method='update',
                      args=[{'visible': [False, False, True, True]},
-                           {'title': "<b>Daily Cases by Specimen Date</b><br><sup>7 day average"}]),
+                           {'title': ("<b>Daily Cases by Specimen Date</b>"
+                                      "<br><sup>7 day average")}]),
             ])
         )
     ]
@@ -222,17 +222,20 @@ fig.write_html('graphs/cases/daily_cases_uk.html')
 # ----------------
 
 # Date is only available from the 6th March 2020
-uk_deaths = uk[uk['date'] >= '2020-03-06'][['date', 'newDeaths28DaysByDeathDate']].copy()
+uk_deaths = uk[uk['date'] >= '2020-03-06'][
+    ['date', 'newDeaths28DaysByDeathDate']].copy()
+
+uk_deaths.columns = ['date', 'deaths']
 
 # 7 day rolling average of deaths
-uk_deaths['7_day_28_day'] = uk_deaths['newDeaths28DaysByDeathDate'].rolling(window=7).mean()
+uk_deaths['deaths_7_day'] = uk_deaths['deaths'].rolling(window=7).mean()
 
 # Thousand comma separated strings to be displayed in labels on graphs for
 # easier reading.
-uk_deaths['newDeaths28DaysByDeathDate_str'] = \
-    uk_deaths['newDeaths28DaysByDeathDate'].apply(lambda x: "{:,}".format(x).replace(".0", ""))
-uk_deaths['7_day_28_day_str'] = \
-    uk_deaths['7_day_28_day'].apply(lambda x: "{:,}".format(round(x, 2)))
+uk_deaths['deaths_str'] = uk_deaths['deaths'].apply(
+    lambda x: "{:,}".format(x).replace(".0", ""))
+uk_deaths['deaths_7_day_str'] = uk_deaths['deaths_7_day'].apply(
+    lambda x: "{:,}".format(round(x, 2)))
 
 # -------------------------
 # Graph - daily deaths UK
@@ -245,12 +248,12 @@ fig = go.Figure()
 fig.add_trace(
     go.Scatter(
         x=list(uk_deaths['date']),
-        y=list(uk_deaths['7_day_28_day']),
+        y=list(uk_deaths['deaths_7_day']),
         marker=dict(color='rgb(150, 65, 65)'),
         showlegend=False,
         customdata=np.stack((
-            uk_deaths['7_day_28_day_str'], 
-            uk_deaths['newDeaths28DaysByDeathDate_str']
+            uk_deaths['deaths_7_day_str'], 
+            uk_deaths['deaths_str']
         ), axis=-1),
         hoverlabel=dict(
             bgcolor='white',
@@ -271,7 +274,7 @@ fig.add_trace(
 fig.add_trace(
     go.Bar(
         x=list(uk_deaths['date']),
-        y=list(uk_deaths['newDeaths28DaysByDeathDate']),
+        y=list(uk_deaths['deaths']),
         marker=dict(color='rgb(200, 200, 200)'),
         showlegend=False,
         hoverinfo='skip'
@@ -280,10 +283,9 @@ fig.add_trace(
 
 fig.update_layout(
     template=template,
-    title="<b>Daily Deaths Within 28 Days of a Positive COVID-19 Test</b><br><sup>7 day average",
-    yaxis=dict(
-        title="Daily Deaths"
-    ),
+    title=("<b>Daily Deaths Within 28 Days of a Positive COVID-19 Test</b>"
+           "<br><sup>7 day average"),
+    yaxis_title="Daily Deaths",
     annotations=[
         dict(
             x=0, y=-0.1,
@@ -310,17 +312,20 @@ fig.write_html('graphs/deaths/daily_deaths_uk.html')
 # -----------------------------
 
 # UK admissions data only available from 23rd March 2020
-uk_admissions = uk[uk['date'] >= '2020-03-23'][['date', 'newAdmissions']].copy()
+uk_admissions = uk[uk['date'] >= '2020-03-23'][
+    ['date', 'newAdmissions']].copy()
+
+uk_admissions.columns = ['date', 'admissions']
 
 # 7 day rolling average of admissions
-uk_admissions['7_day_admissions'] = uk_admissions['newAdmissions'].rolling(window=7).mean()
+uk_admissions['admissions_7_day'] = uk_admissions['admissions'].rolling(window=7).mean()
 
 # Thousand comma separated strings to be displayed in labels on graphs for
 # easier reading.
-uk_admissions['newAdmissions_str'] = \
-    uk_admissions['newAdmissions'].apply(lambda x: "{:,}".format(x).replace(".0", ""))
-uk_admissions['7_day_admissions_str'] = \
-    uk_admissions['7_day_admissions'].apply(lambda x: "{:,}".format(round(x, 2)))
+uk_admissions['admissions_str'] = uk_admissions['admissions'].apply(
+    lambda x: "{:,}".format(x).replace(".0", ""))
+uk_admissions['admissions_7_day_str'] = uk_admissions['admissions_7_day'].apply(
+    lambda x: "{:,}".format(round(x, 2)))
 
 # -----------------------------
 # Graph - daily admissions UK
@@ -333,12 +338,12 @@ fig = go.Figure()
 fig.add_trace(
     go.Scatter(
         x=list(uk_admissions['date']),
-        y=list(uk_admissions['7_day_admissions']),
+        y=list(uk_admissions['admissions_7_day']),
         marker=dict(color='rgb(150, 65, 65)'),
         showlegend=False,
         customdata=np.stack((
-            uk_admissions['7_day_admissions_str'], 
-            uk_admissions['newAdmissions_str']
+            uk_admissions['admissions_7_day_str'], 
+            uk_admissions['admissions_str']
         ), axis=-1),
         hoverlabel=dict(
             bgcolor='white',
@@ -359,7 +364,7 @@ fig.add_trace(
 fig.add_trace(
     go.Bar(
         x=list(uk_admissions['date']),
-        y=list(uk_admissions['newAdmissions']),
+        y=list(uk_admissions['admissions']),
         marker=dict(color='rgb(200, 200, 200)'),
         showlegend=False,
         hoverinfo='skip'
@@ -369,9 +374,7 @@ fig.add_trace(
 fig.update_layout(
     template=template,
     title="<b>Daily Hospital Admissions</b><br><sup>7 day average",
-    yaxis=dict(
-        title="Daily Admissions"
-    ),
+    yaxis_title="Daily Admissions",
     annotations=[
         dict(
             x=0, y=-0.1,
@@ -397,20 +400,23 @@ fig.write_html('graphs/admissions/daily_admissions_uk.html')
 # Vaccinations data from gov.uk
 # =============================================================================
 
-vaccine_url = "https://api.coronavirus.data.gov.uk/v2/data?areaType=overview" \
-              "&metric=cumPeopleVaccinatedFirstDoseByPublishDate" \
-              "&metric=cumPeopleVaccinatedSecondDoseByPublishDate&format=csv"
+vaccine_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=overview"
+               "&metric=cumPeopleVaccinatedFirstDoseByPublishDate"
+               "&metric=cumPeopleVaccinatedSecondDoseByPublishDate&format=csv")
 
 vaccine = pd.read_csv(vaccine_url)
 
 vaccine = vaccine[vaccine['date'] >= '2021-01-10'].sort_values('date')
 
+vaccine.columns = ['date', 'area_type', 'area_code', 'area_name', 
+                   'total_first', 'total_second']
+
 # Create thousand commas separated strings to use in the plots as they are
 # easier to read.
-vaccine['cumPeopleVaccinatedFirstDoseByPublishDate_str'] = \
-    vaccine['cumPeopleVaccinatedFirstDoseByPublishDate'].apply(lambda x: "{:,}".format(int(x)))
-vaccine['cumPeopleVaccinatedSecondDoseByPublishDate_str'] = \
-    vaccine['cumPeopleVaccinatedSecondDoseByPublishDate'].apply(lambda x: "{:,}".format(int(x)))
+vaccine['total_first_str'] = vaccine['total_first'].apply(
+    lambda x: "{:,}".format(int(x)))
+vaccine['total_second_str'] = vaccine['total_second'].apply(
+    lambda x: "{:,}".format(int(x)))
 
 # ------------------------------------
 # Graph - total number of vaccinations
@@ -423,10 +429,10 @@ fig = go.Figure()
 fig.add_trace(
     go.Scatter(
         x=list(vaccine['date']),
-        y=list(vaccine['cumPeopleVaccinatedFirstDoseByPublishDate']),
+        y=list(vaccine['total_first']),
         marker=dict(color='rgb(150, 65, 65)'),
         name="1st Dose",
-        text=vaccine['cumPeopleVaccinatedFirstDoseByPublishDate_str'],
+        text=vaccine['total_first_str'],
         hoverlabel=dict(
             bgcolor='white',
             bordercolor='gray',
@@ -445,10 +451,10 @@ fig.add_trace(
 fig.add_trace(
     go.Scatter(
         x=list(vaccine['date']),
-        y=list(vaccine['cumPeopleVaccinatedSecondDoseByPublishDate']),
+        y=list(vaccine['total_second']),
         marker=dict(color='darkblue'),
         name="2nd Dose",
-        text=vaccine['cumPeopleVaccinatedSecondDoseByPublishDate_str'],
+        text=vaccine['total_second_str'],
         hoverlabel=dict(
             bgcolor='white',
             bordercolor='gray',
@@ -465,10 +471,9 @@ fig.add_trace(
 
 fig.update_layout(
     template=template,
-    title="<b>Number Who Have Received the 1st and 2nd Vaccine Dose (Publication Date)</b>",
-    yaxis=dict(
-        title="Vaccinations"
-    ),
+    title=("<b>Number Who Have Received the 1st and 2nd Vaccine Dose "
+           "(Publication Date)</b>"),
+    yaxis_title="Vaccinations",
     annotations=[
         dict(
             x=0, y=-0.10,
@@ -498,8 +503,8 @@ fig.write_html('graphs/vaccine/vaccine_total.html')
 # UK total population
 uk_pop = population.iloc[0]['All ages']
 
-dose_2_percent = vaccine['cumPeopleVaccinatedSecondDoseByPublishDate'].max() / uk_pop * 100
-dose_1_percent = vaccine['cumPeopleVaccinatedFirstDoseByPublishDate'].max() / uk_pop * 100
+dose_2_percent = vaccine['total_second'].max() / uk_pop * 100
+dose_1_percent = vaccine['total_first'].max() / uk_pop * 100
 
 x = [dose_2_percent, dose_1_percent]
 y = [100 - dose_2_percent, 100 - dose_1_percent]
@@ -542,11 +547,12 @@ fig.add_trace(
 )
 
 fig.update_layout(
-    title="<b>% of UK Population Who Have Received Vaccination</b><br>" \
-          "<sup>Source: gov.uk (Vaccinations by Publish Date)",
+    title=("<b>% of UK Population Who Have Received Vaccination</b><br>"
+           "<sup>Source: gov.uk (Vaccinations by Publish Date)"),
     barmode='stack',
     legend_traceorder='normal',
     xaxis=dict(
+        title="%",
         linewidth=2,
         linecolor='black',
         gridwidth=1,
@@ -569,13 +575,15 @@ fig.write_html('graphs/vaccine/percentage_vaccinated.html')
 # ----------------------------
 
 # Daily vaccinations
-vaccine['daily_1'] = vaccine['cumPeopleVaccinatedFirstDoseByPublishDate'].diff()
-vaccine['daily_2'] = vaccine['cumPeopleVaccinatedSecondDoseByPublishDate'].diff()
+vaccine['daily_1'] = vaccine['total_first'].diff()
+vaccine['daily_2'] = vaccine['total_second'].diff()
 
 # Create thousand commas separated strings to use in the plots as they are
 # easier to read.
-vaccine['daily_1_str'] = vaccine['daily_1'].apply(lambda x: "{:,}".format(x).replace(".0", ""))
-vaccine['daily_2_str'] = vaccine['daily_2'].apply(lambda x: "{:,}".format(x).replace(".0", ""))
+vaccine['daily_1_str'] = vaccine['daily_1'].apply(
+    lambda x: "{:,}".format(x).replace(".0", ""))
+vaccine['daily_2_str'] = vaccine['daily_2'].apply(
+    lambda x: "{:,}".format(x).replace(".0", ""))
 
 fig = go.Figure()
 
@@ -626,9 +634,7 @@ fig.add_trace(
 fig.update_layout(
     template=template,
     title="<b>Daily Vaccinations (by Published Date)</b>",
-    yaxis=dict(
-        title="Daily Vaccinations"
-    ),
+    yaxis_title="Daily Vaccinations",
     annotations=[
         dict(
             x=0, y=-0.12,
@@ -659,21 +665,22 @@ fig.write_html('graphs/vaccine/daily_vaccinations.html')
 # 14-January-2021
 date_range = pd.Series(pd.date_range('14-01-2021', '31-12-2021', freq='7D'))
 date_today = pd.to_datetime(datetime.date.today())
-most_recent_thursday = date_range[date_range.le(date_today)].max().strftime("%d-%B-%Y")
+most_recent_thursday = date_range[date_range.le(date_today)].max()
+most_recent_thursday = most_recent_thursday.strftime("%d-%B-%Y")
 
-vaccine_80_url = "https://www.england.nhs.uk/statistics/wp-content/uploads/" \
-                 "sites/2/2021/01/COVID-19-weekly-announced-vaccinations-" \
-                 + most_recent_thursday + ".xlsx"
+vaccine_80_url = ("https://www.england.nhs.uk/statistics/wp-content/uploads/"
+                  "sites/2/2021/01/COVID-19-weekly-announced-vaccinations-"
+                  + most_recent_thursday + ".xlsx")
 
-vaccines_80 = pd.read_excel(vaccine_80_url,
-                            sheet_name='Vaccinations by Region & Age',
-                            skiprows=11,
-                            usecols='B,D,E,G,H')
+vaccine_80 = pd.read_excel(vaccine_80_url,
+                           sheet_name='Vaccinations by Region & Age',
+                           skiprows=11,
+                           usecols='B,D,E,G,H')
 
-vaccines_80 = vaccines_80[vaccines_80['Region of Residence'] == 'Total']
+vaccine_80 = vaccine_80[vaccine_80['Region of Residence'] == 'Total']
 
-vaccines_80.columns = ['Region', 'Under 80 1st Dose', '80+ 1st Dose',
-                       'Under 80 2nd Dose', '80+ 2nd Dose']
+vaccine_80.columns = ['region', 'under_80_first', 'over_80_first',
+                      'under_80_second', 'over_80_second']
 
 # -------------------------------------
 # Graph - percentage vaccinated over 80
@@ -681,11 +688,12 @@ vaccines_80.columns = ['Region', 'Under 80 1st Dose', '80+ 1st Dose',
 # -------------------------------------
 
 # UK population 80+ years old
-pop = population[population['Name'] == 'UNITED KINGDOM'][list(range(80, 90)) + ["90+"]]
+pop = population[population['Name'] == 'UNITED KINGDOM'][
+    list(range(80, 90)) + ["90+"]]
 pop_over_80 = pop.iloc[0,:].sum()
 
-dose_2_percent = vaccines_80['80+ 2nd Dose'].max() / pop_over_80 * 100
-dose_1_percent = vaccines_80['80+ 1st Dose'].max() / pop_over_80 * 100
+dose_2_percent = vaccine_80['over_80_second'].max() / pop_over_80 * 100
+dose_1_percent = vaccine_80['over_80_first'].max() / pop_over_80 * 100
 
 x = [dose_2_percent, dose_1_percent]
 y = [100 - dose_2_percent, 100 - dose_1_percent]
@@ -728,15 +736,17 @@ fig.add_trace(
 )
 
 fig.update_layout(
-    title="<b>% of England Population Aged 80 or Over Who Have Received Vaccination"  \
-          "(as of " + most_recent_thursday.replace("-", " ") + ")</b><br>" \
-          "<sup>Source: NHS England",
+    title=("<b>% of England Population Aged 80 or Over Who Have Received "
+           "Vaccination (as of " 
+           + most_recent_thursday.replace("-", " ")
+           + ")</b><br><sup>Source: NHS England"),
     barmode='stack',
     legend_traceorder='normal',
     font=dict(
         family='Arial'
     ),
     xaxis=dict(
+        title="%",
         linewidth=2,
         linecolor='black',
         gridwidth=1,
@@ -761,12 +771,15 @@ fig.write_html('graphs/vaccine/percentage_vaccinated_80.html')
 # Cases
 # -----
 
-regional_url = "https://api.coronavirus.data.gov.uk/v2/data?areaType=region" \
-               "&metric=newCasesBySpecimenDate" \
-               "&metric=newCasesByPublishDate" \
-               "&metric=newDeaths28DaysByDeathDate&format=csv"
+regional_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=region"
+                "&metric=newCasesBySpecimenDate"
+                "&metric=newCasesByPublishDate"
+                "&metric=newDeaths28DaysByDeathDate&format=csv")
 
 regional = pd.read_csv(regional_url)
+
+regional.columns = ['date', 'area_type', 'area_code', 'area_name', 'specimen', 
+                    'publish', 'deaths']
 
 regional['date'] = pd.to_datetime(regional['date'], format='%Y-%m-%d')
 regional = regional.sort_values('date')
@@ -776,39 +789,49 @@ regional = regional.sort_values('date')
 # either side of 1st July is taken.
 def july_1(df):
     df = df.reset_index()
-    row = df[df['date']=='2020-07-01'].index[0]
-    rows = list(range(row-3,row)) + list(range(row+1,row+4))
-    mean = df.iloc[rows, :]['newCasesByPublishDate'].mean()
-    df.loc[df['date']=='2020-07-01', 'newCasesByPublishDate'] = mean
+    row_july_1 = df[df['date']=='2020-07-01'].index[0]
+    rows = (list(range(row_july_1 - 3, row_july_1))
+            + list(range(row_july_1 + 1, row_july_1 + 4)))
+    mean = df.iloc[rows, :]['publish'].mean()
+    df.loc[df['date']=='2020-07-01', 'publish'] = mean
     return df
 
-regional = regional.groupby('areaName', as_index=False).apply(july_1)
+regional = regional.groupby('area_name', as_index=False).apply(july_1)
 
 # 7 day rolling average for cases by specimen date and publish date, and daily
 # deaths.
-regional[
-    ['7_day_specimen', '7_day_publish', '7_day_deaths']
-        ] = regional.groupby(['areaName', 'areaCode'], as_index=False)[
-    ['newCasesBySpecimenDate', 'newCasesByPublishDate', 'newDeaths28DaysByDeathDate']
-        ].apply(lambda x: x.rolling(window=7, min_periods=1).mean())
+grouped_regions = regional.groupby(['area_name', 'area_code'], as_index=False)
+grouped_regions = grouped_regions[['specimen', 'publish', 'deaths']].apply(
+    lambda x: x.rolling(window=7, min_periods=1).mean())
+regional[['specimen_7_day', 'publish_7_day', 'deaths_7_day']] = grouped_regions
 
 regional = regional.merge(population[['Code', 'All ages']],
-                          left_on='areaCode',
+                          left_on='area_code',
                           right_on='Code',
                           how='left')
 
-regional['specimen_per_100000'] = regional['7_day_specimen'] / regional['All ages'] * 100000
-regional['publish_per_100000'] = regional['7_day_publish'] / regional['All ages'] * 100000
-regional['deaths_per_100000'] = regional['7_day_deaths'] / regional['All ages'] * 100000
+regional['specimen_per_100000'] = (regional['specimen_7_day'] 
+                                   / regional['All ages'] * 100000)
+regional['publish_per_100000'] = (regional['publish_7_day'] 
+                                  / regional['All ages'] * 100000)
+regional['deaths_per_100000'] = (regional['deaths_7_day'] 
+                                 / regional['All ages'] * 100000)
 
-regional['7_day_specimen_str'] = regional['7_day_specimen'].apply(lambda x: "{:,}".format(round(x, 2)))
-regional['7_day_publish_str'] = regional['7_day_publish'].apply(lambda x: "{:,}".format(round(x, 2)))
-regional['7_day_deaths_str'] = regional['7_day_deaths'].apply(lambda x: "{:,}".format(round(x, 2)))
+# Create thousand commas separated strings to use in the plots as they are
+# easier to read.
+regional['specimen_7_day_str'] = regional['specimen_7_day'].apply(
+    lambda x: "{:,}".format(round(x, 2)))
+regional['publish_7_day_str'] = regional['publish_7_day'].apply(
+    lambda x: "{:,}".format(round(x, 2)))
+regional['deaths_7_day_str'] = regional['deaths_7_day'].apply(
+    lambda x: "{:,}".format(round(x, 2)))
 
-regional['specimen_per_100000_str'] = regional['specimen_per_100000'].apply(lambda x: "{:,}".format(round(x, 2)))
-regional['publish_per_100000_str'] = regional['publish_per_100000'].apply(lambda x: "{:,}".format(round(x, 2)))
-regional['deaths_per_100000_str'] = regional['deaths_per_100000'].apply(lambda x: "{:,}".format(round(x, 3)))
-
+regional['specimen_per_100000_str'] = regional['specimen_per_100000'].apply(
+    lambda x: "{:,}".format(round(x, 2)))
+regional['publish_per_100000_str'] = regional['publish_per_100000'].apply(
+    lambda x: "{:,}".format(round(x, 2)))
+regional['deaths_per_100000_str'] = regional['deaths_per_100000'].apply(
+    lambda x: "{:,}".format(round(x, 3)))
 
 # --------------------------------------
 # Graph - regional cases by publish date
@@ -830,10 +853,10 @@ fig = make_subplots(3, 3, subplot_titles=(regions), shared_xaxes=True)
 for region, row, col in zip(regions, rows, cols):
     fig.add_trace(
         go.Scatter(
-            x=list(regional['date'][regional['areaName'] == region]),
-            y=list(regional['7_day_publish'][regional['areaName'] == region]),
+            x=list(regional['date'][regional['area_name'] == region]),
+            y=list(regional['publish_7_day'][regional['area_name'] == region]),
             showlegend=False,
-            text=regional['7_day_publish_str'],
+            text=regional['publish_7_day_str'],
             hoverlabel=dict(
                 bgcolor='white',
                 bordercolor='gray',
@@ -853,8 +876,8 @@ for region, row, col in zip(regions, rows, cols):
 for region, row, col in zip(regions, rows, cols):
     fig.add_trace(
         go.Scatter(
-            x=list(regional['date'][regional['areaName'] == region]),
-            y=list(regional['publish_per_100000'][regional['areaName'] == region]),
+            x=list(regional['date'][regional['area_name'] == region]),
+            y=list(regional['publish_per_100000'][regional['area_name'] == region]),
             showlegend=False,
             visible=False,
             text=regional['publish_per_100000_str'],
@@ -903,17 +926,19 @@ fig.update_layout(
             y=1.1,
             yanchor='top',
             buttons=list([
-                    dict(label="Cases",
-                         method='update',
-                         args=[{'visible': [True]*9 + [False]*9},
-                                 {'title': "<b>Cases by Published Date</b><br><sup>7 day average"}]),
-                    dict(label="Cases per 100,000",
-                         method='update',
-                         args=[{'visible': [False]*9 + [True]*9},
-                                 {'title': "<b>Cases per 100,000 by Published Date</b><br><sup>7 day average"}]),
-                        ]
-            )
-    )]
+                dict(label="Cases",
+                     method='update',
+                     args=[{'visible': [True]*9 + [False]*9},
+                             {'title': ("<b>Cases by Published Date</b>"
+                                        "<br><sup>7 day average")}]),
+                dict(label="Cases per 100,000",
+                     method='update',
+                     args=[{'visible': [False]*9 + [True]*9},
+                             {'title': ("<b>Cases per 100,000 by Published "
+                                        "Date</b><br><sup>7 day average")}]),
+            ])
+        )
+    ]
 )
 
 fig.add_annotation(
@@ -947,10 +972,10 @@ fig = make_subplots(3, 3, subplot_titles=(regions), shared_xaxes=True)
 for region, row, col in zip(regions, rows, cols):
     fig.add_trace(
         go.Scatter(
-            x=list(regional['date'][regional['areaName'] == region]),
-            y=list(regional['7_day_specimen'][regional['areaName'] == region]),
+            x=list(regional['date'][regional['area_name'] == region]),
+            y=list(regional['specimen_7_day'][regional['area_name'] == region]),
             showlegend=False,
-            text=regional['7_day_specimen_str'],
+            text=regional['specimen_7_day_str'],
             hoverlabel=dict(
                 bgcolor='white',
                 bordercolor='gray',
@@ -970,8 +995,8 @@ for region, row, col in zip(regions, rows, cols):
 for region, row, col in zip(regions, rows, cols):
     fig.add_trace(
         go.Scatter(
-            x=list(regional['date'][regional['areaName'] == region]),
-            y=list(regional['specimen_per_100000'][regional['areaName'] == region]),
+            x=list(regional['date'][regional['area_name'] == region]),
+            y=list(regional['specimen_per_100000'][regional['area_name'] == region]),
             showlegend=False,
             visible=False,
             text=regional['specimen_per_100000_str'],
@@ -1020,17 +1045,19 @@ fig.update_layout(
             y=1.1,
             yanchor='top',
             buttons=list([
-                    dict(label="Cases",
-                         method='update',
-                         args=[{'visible': [True]*9 + [False]*9},
-                                 {'title': "<b>Cases by Specimen Date</b><br><sup>7 day average"}]),
-                    dict(label="Cases per 100,000",
-                         method='update',
-                         args=[{'visible': [False]*9 + [True]*9},
-                                 {'title': "<b>Cases per 100,000 by Specimen Date</b><br><sup>7 day average"}]),
-                        ]
-            )
-    )]
+                dict(label="Cases",
+                     method='update',
+                     args=[{'visible': [True]*9 + [False]*9},
+                             {'title': ("<b>Cases by Specimen Date</b>"
+                                        "<br><sup>7 day average")}]),
+                dict(label="Cases per 100,000",
+                     method='update',
+                     args=[{'visible': [False]*9 + [True]*9},
+                             {'title': ("<b>Cases per 100,000 by Specimen "
+                                        "Date</b><br><sup>7 day average")}]),
+            ])
+        )
+    ]
 )
 
 fig.add_annotation(
@@ -1070,10 +1097,10 @@ fig = make_subplots(3, 3, subplot_titles=(regions), shared_xaxes=True)
 for region, row, col in zip(regions, rows, cols):
     fig.add_trace(
         go.Scatter(
-            x=list(regional['date'][regional['areaName'] == region]),
-            y=list(regional['7_day_deaths'][regional['areaName'] == region]),
+            x=list(regional['date'][regional['area_name'] == region]),
+            y=list(regional['deaths_7_day'][regional['area_name'] == region]),
             showlegend=False,
-            text=regional['7_day_deaths_str'],
+            text=regional['deaths_7_day_str'],
             hoverlabel=dict(
                 bgcolor='white',
                 bordercolor='gray',
@@ -1093,8 +1120,8 @@ for region, row, col in zip(regions, rows, cols):
 for region, row, col in zip(regions, rows, cols):
     fig.add_trace(
         go.Scatter(
-            x=list(regional['date'][regional['areaName'] == region]),
-            y=list(regional['deaths_per_100000'][regional['areaName'] == region]),
+            x=list(regional['date'][regional['area_name'] == region]),
+            y=list(regional['deaths_per_100000'][regional['area_name'] == region]),
             showlegend=False,
             visible=False,
             text=regional['deaths_per_100000_str'],
@@ -1143,17 +1170,18 @@ fig.update_layout(
             y=1.1,
             yanchor='top',
             buttons=list([
-                    dict(label="Deaths",
-                         method='update',
-                         args=[{'visible': [True]*9 + [False]*9},
-                                 {'title': "<b>Deaths</b><br><sup>7 day average"}]),
-                    dict(label="Deaths per 100,000",
-                         method='update',
-                         args=[{'visible': [False]*9 + [True]*9},
-                                 {'title': "<b>Deaths per 100,000</b><br><sup>7 day average"}]),
-                        ]
-            )
-    )]
+                dict(label="Deaths",
+                     method='update',
+                     args=[{'visible': [True]*9 + [False]*9},
+                           {'title': "<b>Deaths</b><br><sup>7 day average"}]),
+                dict(label="Deaths per 100,000",
+                     method='update',
+                     args=[{'visible': [False]*9 + [True]*9},
+                           {'title': ("<b>Deaths per 100,000</b><br>"
+                                      "<sup>7 day average")}]),
+            ])
+        )
+    ]
 )
 
 fig.add_annotation(
@@ -1180,28 +1208,33 @@ fig.write_html('graphs/deaths/region_daily_deaths.html')
 # Council data
 # =============================================================================
 
-council_url = "https://api.coronavirus.data.gov.uk/v2/data?areaType=ltla" \
-              "&metric=newCasesByPublishDate" \
-              "&metric=newDeaths28DaysByDeathDate&format=csv"
+council_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=ltla"
+               "&metric=newCasesByPublishDate"
+               "&metric=newDeaths28DaysByDeathDate&format=csv")
 
 council = pd.read_csv(council_url)
+
+council.columns = ['date', 'area_type', 'area_code', 'area_name', 'publish', 
+                   'deaths']
 
 council['date'] = pd.to_datetime(council['date'], format='%Y-%m-%d')
 council = council.sort_values('date')
 
 # Group by area and take the sum of cases in the past 7 days
-council_week = council.groupby(
-    ['areaCode', 'areaName'], as_index=False)[
-    ['newCasesByPublishDate', 'newDeaths28DaysByDeathDate']
-        ].apply(lambda x: x.iloc[-7:].sum())
+grouped_council = council.groupby(['area_code', 'area_name'], as_index=False)
+
+council_week = grouped_council[['publish', 'deaths']].apply(
+    lambda x: x.iloc[-7:].sum())
 
 council_week = council_week.merge(population[['Code', 'All ages']],
-                                  left_on='areaCode',
+                                  left_on='area_code',
                                   right_on='Code',
                                   how='left')
 
-council_week['cases_per_100000'] = council_week['newCasesByPublishDate'] / council_week['All ages'] * 100000
-council_week['deaths_per_100000'] = council_week['newDeaths28DaysByDeathDate'] / council_week['All ages'] * 100000
+council_week['cases_per_100000'] = (council_week['publish'] 
+                                    / council_week['All ages'] * 100000)
+council_week['deaths_per_100000'] = (council_week['deaths'] 
+                                     / council_week['All ages'] * 100000)
 
 # --------------------------------------------
 # Table - cases in the past 7 days per 100,000
@@ -1212,12 +1245,13 @@ table_config = {'displayModeBar': False}
 colors = ['rgb(240,240,240)', 'rgb(240,230,230)']*150
 
 # Sort by cases and create a rank column for display in the table
-df_cases = council_week.sort_values('cases_per_100000', ascending=False).reset_index()
+df_cases = council_week.sort_values(
+    'cases_per_100000', ascending=False).reset_index()
 df_cases['rank'] = df_cases.index+1
 
 # Sort councils alphabetically and create a rank column for display in the
 # table
-df_alpha = council_week.sort_values('areaName').reset_index()
+df_alpha = council_week.sort_values('area_name').reset_index()
 df_alpha['rank'] = df_alpha.index+1
 
 table = go.Figure()
@@ -1236,7 +1270,7 @@ table.add_trace(
         ),
         cells=dict(
             values=[list(df_cases['rank']),
-                    list(df_cases['areaName']),
+                    list(df_cases['area_name']),
                     list(df_cases['cases_per_100000'].round(2))],
             align='left',
             height=30,
@@ -1260,7 +1294,7 @@ table.add_trace(
         ),
         cells=dict(
             values=[list(df_alpha['rank']),
-                    list(df_alpha['areaName']),
+                    list(df_alpha['area_name']),
                     list(df_alpha['cases_per_100000'].round(2))],
             align='left',
             height=30,
@@ -1272,7 +1306,8 @@ table.add_trace(
 )
 
 table.update_layout(
-    title="<b>Cases in the Past 7 Days per 100,000</b><br><sup>Cases by Date Published",
+    title=("<b>Cases in the Past 7 Days per 100,000</b>"
+           "<br><sup>Cases by Date Published"),
     font=dict(
         family='Arial'
     ),
@@ -1311,7 +1346,8 @@ table.write_html('graphs/cases/cases_local_area.html', config=table_config)
 # --------------------------------------------
 
 # Sort by deaths and create a rank column for display in the table
-df_deaths = council_week.sort_values('deaths_per_100000', ascending=False).reset_index()
+df_deaths = council_week.sort_values(
+    'deaths_per_100000', ascending=False).reset_index()
 df_deaths['rank'] = df_deaths.index+1
 
 table = go.Figure()
@@ -1330,7 +1366,7 @@ table.add_trace(
         ),
         cells=dict(
             values=[list(df_deaths['rank']),
-                    list(df_deaths['areaName']),
+                    list(df_deaths['area_name']),
                     list(df_deaths['deaths_per_100000'].round(2))],
             align='left',
             height=30,
@@ -1354,7 +1390,7 @@ table.add_trace(
         ),
         cells=dict(
             values=[list(df_alpha['rank']),
-                    list(df_alpha['areaName']),
+                    list(df_alpha['area_name']),
                     list(df_alpha['deaths_per_100000'].round(2))],
             align='left',
             height=30,
