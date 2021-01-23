@@ -103,7 +103,7 @@ fig.add_trace(
         marker=dict(color='rgb(150, 65, 65)'),
         showlegend=False,
         customdata=np.stack((
-            uk_cases['publish_7_day_str'], 
+            uk_cases['publish_7_day_str'],
             uk_cases['publish_str']
         ), axis=-1),
         hoverlabel=dict(
@@ -141,7 +141,7 @@ fig.add_trace(
         showlegend=False,
         visible=False,
         customdata=np.stack((
-            uk_cases['specimen_7_day_str'], 
+            uk_cases['specimen_7_day_str'],
             uk_cases['specimen_str']
         ), axis=-1),
         hoverlabel=dict(
@@ -252,7 +252,7 @@ fig.add_trace(
         marker=dict(color='rgb(150, 65, 65)'),
         showlegend=False,
         customdata=np.stack((
-            uk_deaths['deaths_7_day_str'], 
+            uk_deaths['deaths_7_day_str'],
             uk_deaths['deaths_str']
         ), axis=-1),
         hoverlabel=dict(
@@ -342,7 +342,7 @@ fig.add_trace(
         marker=dict(color='rgb(150, 65, 65)'),
         showlegend=False,
         customdata=np.stack((
-            uk_admissions['admissions_7_day_str'], 
+            uk_admissions['admissions_7_day_str'],
             uk_admissions['admissions_str']
         ), axis=-1),
         hoverlabel=dict(
@@ -408,7 +408,7 @@ vaccine = pd.read_csv(vaccine_url)
 
 vaccine = vaccine[vaccine['date'] >= '2021-01-10'].sort_values('date')
 
-vaccine.columns = ['date', 'area_type', 'area_code', 'area_name', 
+vaccine.columns = ['date', 'area_type', 'area_code', 'area_name',
                    'total_first', 'total_second']
 
 # Create thousand commas separated strings to use in the plots as they are
@@ -737,7 +737,7 @@ fig.add_trace(
 
 fig.update_layout(
     title=("<b>% of England Population Aged 80 or Over Who Have Received "
-           "Vaccination (as of " 
+           "Vaccination (as of "
            + most_recent_thursday.replace("-", " ")
            + ")</b><br><sup>Source: NHS England"),
     barmode='stack',
@@ -778,7 +778,7 @@ regional_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=region"
 
 regional = pd.read_csv(regional_url)
 
-regional.columns = ['date', 'area_type', 'area_code', 'area_name', 'specimen', 
+regional.columns = ['date', 'area_type', 'area_code', 'area_name', 'specimen',
                     'publish', 'deaths']
 
 regional['date'] = pd.to_datetime(regional['date'], format='%Y-%m-%d')
@@ -810,11 +810,11 @@ regional = regional.merge(population[['Code', 'All ages']],
                           right_on='Code',
                           how='left')
 
-regional['specimen_per_100000'] = (regional['specimen_7_day'] 
+regional['specimen_per_100000'] = (regional['specimen_7_day']
                                    / regional['All ages'] * 100000)
-regional['publish_per_100000'] = (regional['publish_7_day'] 
+regional['publish_per_100000'] = (regional['publish_7_day']
                                   / regional['All ages'] * 100000)
-regional['deaths_per_100000'] = (regional['deaths_7_day'] 
+regional['deaths_per_100000'] = (regional['deaths_7_day']
                                  / regional['All ages'] * 100000)
 
 # Create thousand commas separated strings to use in the plots as they are
@@ -1214,7 +1214,7 @@ council_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=ltla"
 
 council = pd.read_csv(council_url)
 
-council.columns = ['date', 'area_type', 'area_code', 'area_name', 'publish', 
+council.columns = ['date', 'area_type', 'area_code', 'area_name', 'publish',
                    'deaths']
 
 council['date'] = pd.to_datetime(council['date'], format='%Y-%m-%d')
@@ -1231,9 +1231,9 @@ council_week = council_week.merge(population[['Code', 'All ages']],
                                   right_on='Code',
                                   how='left')
 
-council_week['cases_per_100000'] = (council_week['publish'] 
+council_week['cases_per_100000'] = (council_week['publish']
                                     / council_week['All ages'] * 100000)
-council_week['deaths_per_100000'] = (council_week['deaths'] 
+council_week['deaths_per_100000'] = (council_week['deaths']
                                      / council_week['All ages'] * 100000)
 
 # --------------------------------------------
