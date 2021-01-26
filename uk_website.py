@@ -22,7 +22,10 @@ template=dict(
     layout=go.Layout(
         title=dict(
             x=0,
-            xref='paper'
+            xref='paper',
+            y=0.96,
+            yref='container',
+            yanchor='top'
         ),
         xaxis=dict(
             showline=True,
@@ -51,6 +54,7 @@ template=dict(
 
 uk_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=overview"
           "&metric=newAdmissions"
+          "&metric=hospitalCases"
           "&metric=newCasesByPublishDate"
           "&metric=newCasesBySpecimenDate"
           "&metric=newDeaths28DaysByDeathDate&format=csv")
@@ -93,18 +97,23 @@ uk_cases['publish_7_day_str'] = uk_cases['publish_7_day'].apply(
 # Filename: daily_cases_uk
 # ------------------------
 
+# 5 most recent days in grey as the data is incomplete
+uk_cases['color'] = (['rgba(150, 65, 65, 0.5)'] * (len(uk_cases.index) - 5) 
+                     + ['rgb(200, 200, 200)'] * 5)
+
 fig = go.Figure()
 
-# Daily cases (publish date) - 7 day rolling average
+# Daily cases (publish date) - 7 day rolling average. Most recent 5 days are 
+# not included as the data is incomplete.
 fig.add_trace(
     go.Scatter(
-        x=list(uk_cases['date']),
-        y=list(uk_cases['publish_7_day']),
+        x=list(uk_cases['date'][:-5]),
+        y=list(uk_cases['publish_7_day'][:-5]),
+        name="7 Day Average",
         marker=dict(color='rgb(150, 65, 65)'),
-        showlegend=False,
         customdata=np.stack((
-            uk_cases['publish_7_day_str'],
-            uk_cases['publish_str']
+            uk_cases['publish_7_day_str'][:-5],
+            uk_cases['publish_str'][:-5]
         ), axis=-1),
         hoverlabel=dict(
             bgcolor='white',
@@ -126,23 +135,24 @@ fig.add_trace(
     go.Bar(
         x=list(uk_cases['date']),
         y=list(uk_cases['publish']),
-        marker=dict(color='rgb(200, 200, 200)'),
-        showlegend=False,
+        name="Daily Cases",
+        marker=dict(color=list(uk_cases['color'])),
         hoverinfo='skip'
     )
 )
 
-# Daily cases (specimen date) - 7 day rolling average
+# Daily cases (specimen date) - 7 day rolling average. Most recent 5 days are 
+# not included as the data is incomplete.
 fig.add_trace(
     go.Scatter(
-        x=list(uk_cases['date']),
-        y=list(uk_cases['specimen_7_day']),
+        x=list(uk_cases['date'][:-5]),
+        y=list(uk_cases['specimen_7_day'][:-5]),
+        name="7 Day Average",
         marker=dict(color='rgb(150, 65, 65)'),
-        showlegend=False,
         visible=False,
         customdata=np.stack((
-            uk_cases['specimen_7_day_str'],
-            uk_cases['specimen_str']
+            uk_cases['specimen_7_day_str'][:-5],
+            uk_cases['specimen_str'][:-5]
         ), axis=-1),
         hoverlabel=dict(
             bgcolor='white',
@@ -164,8 +174,8 @@ fig.add_trace(
     go.Bar(
         x=list(uk_cases['date']),
         y=list(uk_cases['specimen']),
-        marker=dict(color='rgb(200, 200, 200)'),
-        showlegend=False,
+        name="Daily Cases",
+        marker=dict(color=uk_cases['color']),
         visible=False,
         hoverinfo='skip'
     )
@@ -173,43 +183,43 @@ fig.add_trace(
 
 fig.update_layout(
     template=template,
-    title="<b>Daily Cases by Published Date</b><br><sup>7 day average",
-    yaxis_title="Daily Cases",
-    annotations=[
-        dict(
-            x=0, y=-0.1,
-            text="Source: gov.uk",
-            showarrow=False,
-            xref='paper',
-            yref='paper',
-            xanchor='left',
-            yanchor='auto',
-            xshift=0,
-            yshift=0,
-            font=dict(
-                size=11,
-                color='dimgray'
-            )
-        )
-    ],
+    title=("<b>Daily Cases by Published Date</b><br>"
+           "<sub>7 day average and daily numbers of cases by date published."
+           "<br>The data for the most recent 5 days is incomplete, with the "
+           "<br>daily cases shown in grey."
+           "<br>Source: gov.uk"),
+    margin=dict(t=140),
+    legend=dict(
+        orientation='h', 
+        x=0.5, 
+        xanchor='center'
+    ),
     updatemenus=[
         dict(
             direction='down',
             x=1,
             xanchor='right',
-            y=1.1,
-            yanchor='top',
+            y=1.01,
+            yanchor='bottom',
             buttons=list([
-                dict(label="Published",
+                dict(label="By Publish Date",
                      method='update',
                      args=[{'visible': [True, True, False, False]},
-                           {'title': ("<b>Daily Cases by Published Date</b>"
-                                      "<br><sup>7 day average")}]),
-                dict(label="Specimen",
+                           {'title': ("<b>Daily Cases by Published Date</b><br>"
+                                      "<sub>7 day average and daily numbers "
+                                      "of cases by date published.<br>The "
+                                      "data for the most recent 5 days is "
+                                      "incomplete, with the<br>daily cases "
+                                      "shown in grey.<br>Source: gov.uk")}]),
+                dict(label="By Specimen Date",
                      method='update',
                      args=[{'visible': [False, False, True, True]},
-                           {'title': ("<b>Daily Cases by Specimen Date</b>"
-                                      "<br><sup>7 day average")}]),
+                           {'title': ("<b>Daily Cases by Specimen Date</b><br>"
+                                      "<sub>7 day average and daily numbers "
+                                      "of cases by date published.<br>The "
+                                      "data for the most recent 5 days is "
+                                      "incomplete, with the<br>daily cases "
+                                      "shown in grey.<br>Source: gov.uk")}]),
             ])
         )
     ]
@@ -242,18 +252,22 @@ uk_deaths['deaths_7_day_str'] = uk_deaths['deaths_7_day'].apply(
 # Filename: daily_deaths_uk
 # -------------------------
 
+# 5 most recent days in grey as the data is incomplete
+uk_deaths['color'] = (['rgba(150, 65, 65, 0.5)'] * (len(uk_deaths.index) - 5) 
+                      + ['rgb(200, 200, 200)'] * 5)
+
 fig = go.Figure()
 
 # Daily deaths - 7 day rolling average
 fig.add_trace(
     go.Scatter(
-        x=list(uk_deaths['date']),
-        y=list(uk_deaths['deaths_7_day']),
+        x=list(uk_deaths['date'][:-5]),
+        y=list(uk_deaths['deaths_7_day'][:-5]),
+        name="7 Day Average",
         marker=dict(color='rgb(150, 65, 65)'),
-        showlegend=False,
         customdata=np.stack((
-            uk_deaths['deaths_7_day_str'],
-            uk_deaths['deaths_str']
+            uk_deaths['deaths_7_day_str'][:-5],
+            uk_deaths['deaths_str'][:-5]
         ), axis=-1),
         hoverlabel=dict(
             bgcolor='white',
@@ -275,34 +289,25 @@ fig.add_trace(
     go.Bar(
         x=list(uk_deaths['date']),
         y=list(uk_deaths['deaths']),
-        marker=dict(color='rgb(200, 200, 200)'),
-        showlegend=False,
+        name="Daily Deaths",
+        marker=dict(color=uk_deaths['color']),
         hoverinfo='skip'
     )
 )
 
 fig.update_layout(
     template=template,
-    title=("<b>Daily Deaths Within 28 Days of a Positive COVID-19 Test</b>"
-           "<br><sup>7 day average"),
-    yaxis_title="Daily Deaths",
-    annotations=[
-        dict(
-            x=0, y=-0.1,
-            text="Source: gov.uk",
-            showarrow=False,
-            xref='paper',
-            yref='paper',
-            xanchor='left',
-            yanchor='auto',
-            xshift=0,
-            yshift=0,
-            font=dict(
-                size=11,
-                color='dimgray'
-            )
-        )
-    ]
+    title=("<b>Daily Deaths Within 28 Days of a Positive COVID-19 Test</b><br>"
+           "<sub>7 day average and daily numbers of deaths by date of death."
+           "<br>The data for the most recent 5 days is incomplete, with the "
+           "<br>daily deaths shown in grey."
+           "<br>Source: gov.uk"),
+    margin=dict(t=140),
+    legend=dict(
+        orientation='h', 
+        x=0.5, 
+        xanchor='center'
+    )
 )
 
 fig.write_html('graphs/deaths/daily_deaths_uk.html')
@@ -313,9 +318,9 @@ fig.write_html('graphs/deaths/daily_deaths_uk.html')
 
 # UK admissions data only available from 23rd March 2020
 uk_admissions = uk[uk['date'] >= '2020-03-23'][
-    ['date', 'newAdmissions']].copy()
+    ['date', 'newAdmissions', 'hospitalCases']].copy()
 
-uk_admissions.columns = ['date', 'admissions']
+uk_admissions.columns = ['date', 'admissions', 'in_hospital']
 
 # 7 day rolling average of admissions
 uk_admissions['admissions_7_day'] = uk_admissions['admissions'].rolling(window=7).mean()
@@ -326,6 +331,8 @@ uk_admissions['admissions_str'] = uk_admissions['admissions'].apply(
     lambda x: "{:,}".format(x).replace(".0", ""))
 uk_admissions['admissions_7_day_str'] = uk_admissions['admissions_7_day'].apply(
     lambda x: "{:,}".format(round(x, 2)))
+uk_admissions['in_hospital_str'] = uk_admissions['in_hospital'].apply(
+    lambda x: "{:,}".format(x).replace(".0", ""))
 
 # -----------------------------
 # Graph - daily admissions UK
@@ -339,8 +346,8 @@ fig.add_trace(
     go.Scatter(
         x=list(uk_admissions['date']),
         y=list(uk_admissions['admissions_7_day']),
+        name="7 Day Average",
         marker=dict(color='rgb(150, 65, 65)'),
-        showlegend=False,
         customdata=np.stack((
             uk_admissions['admissions_7_day_str'],
             uk_admissions['admissions_str']
@@ -365,36 +372,68 @@ fig.add_trace(
     go.Bar(
         x=list(uk_admissions['date']),
         y=list(uk_admissions['admissions']),
-        marker=dict(color='rgb(200, 200, 200)'),
-        showlegend=False,
+        name="Daily Admissions",
+        marker=dict(color='rgba(150, 65, 65, 0.5)'),
         hoverinfo='skip'
     )
 )
 
 fig.update_layout(
     template=template,
-    title="<b>Daily Hospital Admissions</b><br><sup>7 day average",
-    yaxis_title="Daily Admissions",
-    annotations=[
-        dict(
-            x=0, y=-0.1,
-            text="Source: gov.uk",
-            showarrow=False,
-            xref='paper',
-            yref='paper',
-            xanchor='left',
-            yanchor='auto',
-            xshift=0,
-            yshift=0,
-            font=dict(
-                size=11,
-                color='dimgray'
-            )
-        )
-    ]
+    title=("<b>Number of People Admitted to Hospital Each day</b>"
+           "<br><sub>Source: gov.uk"),
+    legend=dict(
+        orientation='h', 
+        x=0.5, 
+        xanchor='center'
+    )
 )
 
 fig.write_html('graphs/admissions/daily_admissions_uk.html')
+
+# -----------------------------
+# Graph - daily admissions UK
+# Filename: daily_admissions_uk
+# -----------------------------
+
+fig = go.Figure()
+
+# UK COVID-19 patients - bar plot
+fig.add_trace(
+    go.Bar(
+        x=list(uk_admissions['date']),
+        y=list(uk_admissions['in_hospital']),
+        marker=dict(color='rgba(150, 65, 65, 0.8)'),
+        text=uk_admissions['in_hospital_str'],
+        hoverlabel=dict(
+            bgcolor='white',
+            bordercolor='gray',
+            font=dict(
+                color='black'
+            )
+        ),
+        hovertemplate=
+        '<extra></extra>'+
+        '<b>%{x}</b><br>'+
+        '<b>Patients</b>: %{text}<br>'
+    )
+)
+
+fig.update_layout(
+    template=template,
+    title=("<b>Total Number of Confirmed COVID-19 Patients in Hospital</b>"
+           "<br><sub>Note - the definition of a COVID-19 patient differs "
+           "between England, Wales, Scotland and Northern Ireland."
+           "<br>Source: gov.uk"),
+    margin=dict(t=100),
+    legend=dict(
+        orientation='h', 
+        x=0.5, 
+        xanchor='center'
+    )
+)
+
+fig.write_html('graphs/admissions/in_hospital_uk.html')
 
 # =============================================================================
 # Vaccinations data from gov.uk
@@ -471,26 +510,11 @@ fig.add_trace(
 
 fig.update_layout(
     template=template,
-    title=("<b>Number Who Have Received the 1st and 2nd Vaccine Dose "
-           "(Publication Date)</b>"),
-    yaxis_title="Vaccinations",
-    annotations=[
-        dict(
-            x=0, y=-0.10,
-            text="Source: gov.uk",
-            showarrow=False,
-            xref='paper',
-            yref='paper',
-            xanchor='left',
-            yanchor='auto',
-            xshift=0,
-            yshift=0,
-            font=dict(
-                size=11,
-                color='dimgray'
-            )
-        )
-    ]
+    title=("<b>Number of People Who Have Received the 1st and 2nd Vaccine "
+           "Dose</b>"
+           "<br><sub>The date is the date the vaccination was reported."
+           "<br>Source: gov.uk"),
+    margin=dict(t=100)
 )
 
 fig.write_html('graphs/vaccine/vaccine_total.html')
@@ -547,12 +571,19 @@ fig.add_trace(
 )
 
 fig.update_layout(
-    title=("<b>% of UK Population Who Have Received Vaccination</b><br>"
-           "<sup>Source: gov.uk (Vaccinations by Publish Date)"),
+    title=dict(
+        text=("<b>% of UK Population Who Have Received Vaccination</b><br>"
+              "<sub>The date is the date the vaccination was reported."
+              "<br>Source: gov.uk"),
+        x=0,
+        xref='paper',
+        y=0.85,
+        yref='container',
+        yanchor='top'
+    ),
     barmode='stack',
     legend_traceorder='normal',
     xaxis=dict(
-        title="%",
         linewidth=2,
         linecolor='black',
         gridwidth=1,
@@ -562,8 +593,8 @@ fig.update_layout(
         linewidth=2,
         linecolor='black',
     ),
-    height=140,
-    margin=dict(t=45, b=0),
+    height=200,
+    margin=dict(t=90, b=0),
     plot_bgcolor='white'
 )
 
@@ -633,25 +664,10 @@ fig.add_trace(
 
 fig.update_layout(
     template=template,
-    title="<b>Daily Vaccinations (by Published Date)</b>",
-    yaxis_title="Daily Vaccinations",
-    annotations=[
-        dict(
-            x=0, y=-0.12,
-            text="Source: gov.uk",
-            showarrow=False,
-            xref='paper',
-            yref='paper',
-            xanchor='left',
-            yanchor='auto',
-            xshift=0,
-            yshift=0,
-            font=dict(
-                size=11,
-                color='dimgray'
-            )
-        )
-    ]
+    title=("<b>Daily Vaccinations</b>"
+           "<br><sub>The date is the date the vaccination was reported."
+           "<br>Source: gov.uk"),
+    margin=dict(t=100)
 )
 
 fig.write_html('graphs/vaccine/daily_vaccinations.html')
@@ -736,17 +752,20 @@ fig.add_trace(
 )
 
 fig.update_layout(
-    title=("<b>% of England Population Aged 80 or Over Who Have Received "
-           "Vaccination (as of "
-           + most_recent_thursday.replace("-", " ")
-           + ")</b><br><sup>Source: NHS England"),
+    title=dict(
+        text=("<b>% of England's Population Aged 80 or Over Who Have Received "
+              "Vaccination (as of " + most_recent_thursday.replace("-", " ") 
+              + ")</b>"
+              "<br><sub>Source: NHS England"),
+        x=0,
+        xref='paper',
+        y=0.85,
+        yref='container',
+        yanchor='top'
+    ),
     barmode='stack',
     legend_traceorder='normal',
-    font=dict(
-        family='Arial'
-    ),
     xaxis=dict(
-        title="%",
         linewidth=2,
         linecolor='black',
         gridwidth=1,
@@ -756,8 +775,8 @@ fig.update_layout(
         linewidth=2,
         linecolor='black',
     ),
-    height=140,
-    margin=dict(t=45, b=0),
+    height=180,
+    margin=dict(t=70, b=0),
     plot_bgcolor='white'
 )
 
@@ -844,13 +863,10 @@ regions = [
     'South West', 'London', 'South East'
 ]
 
-rows = [1,1,1,2,2,2,3,3,3]
-cols = [1,2,3,1,2,3,1,2,3]
-
 fig = make_subplots(3, 3, subplot_titles=(regions), shared_xaxes=True)
 
 # Daily cases by region (publish date)
-for region, row, col in zip(regions, rows, cols):
+for value, region in enumerate(regions, start=3):
     fig.add_trace(
         go.Scatter(
             x=list(regional['date'][regional['area_name'] == region]),
@@ -869,11 +885,11 @@ for region, row, col in zip(regions, rows, cols):
             '<b>%{x}</b><br>'+
             '%{text}'
         ),
-        row, col
+        value//3, value%3+1
     )
 
 # Daily cases by region per 100,000 (publish date)
-for region, row, col in zip(regions, rows, cols):
+for value, region in enumerate(regions, start=3):
     fig.add_trace(
         go.Scatter(
             x=list(regional['date'][regional['area_name'] == region]),
@@ -893,7 +909,7 @@ for region, row, col in zip(regions, rows, cols):
             '<b>%{x}</b><br>'+
             '%{text}'
         ),
-        row, col
+        value//3, value%3+1
     )
 
 fig.update_xaxes(
@@ -912,51 +928,48 @@ fig.update_yaxes(
 )
 
 fig.update_layout(
-    title="<b>Cases by Published Date</b><br><sup>7 day average",
-    font=dict(
-        family='Arial'
+    title=dict(
+        text=("<b>Daily Cases by Region (Cases Reported by Publish Date)</b>"
+              "<br><sub>7 day rolling average of daily cases by publish date."
+              "<br>Source: gov.uk"),
+        x=0,
+        xref='paper',
+        y=0.96,
+        yref='container',
+        yanchor='top'
+        
     ),
     plot_bgcolor='white',
     height=800,
+    margin=dict(t=120),
     updatemenus=[
         dict(
             direction='down',
             x=1,
             xanchor='right',
-            y=1.1,
-            yanchor='top',
+            y=1.07,
+            yanchor='bottom',
             buttons=list([
                 dict(label="Cases",
                      method='update',
                      args=[{'visible': [True]*9 + [False]*9},
-                             {'title': ("<b>Cases by Published Date</b>"
-                                        "<br><sup>7 day average")}]),
+                             {'title': ("<b>Daily Cases by Region "
+                                        "(Cases Reported by Publish Date)</b>"
+                                        "<br><sub>7 day rolling average of "
+                                        "daily cases by publish date."
+                                        "<br>Source: gov.uk")}]),
                 dict(label="Cases per 100,000",
                      method='update',
                      args=[{'visible': [False]*9 + [True]*9},
-                             {'title': ("<b>Cases per 100,000 by Published "
-                                        "Date</b><br><sup>7 day average")}]),
+                             {'title': ("<b>Daily Cases per 100,000 by Region "
+                                        "(Cases Reported by Publish Date)</b>"
+                                        "<br><sub>7 day rolling average of "
+                                        "daily cases per 100,000 by publish "
+                                        "date."
+                                        "<br>Source: gov.uk")}]),
             ])
         )
     ]
-)
-
-fig.add_annotation(
-    dict(
-        x=0, y=-0.08,
-        text="Source: gov.uk, ONS",
-        showarrow=False,
-        xref='paper',
-        yref='paper',
-        xanchor='left',
-        yanchor='auto',
-        xshift=0,
-        yshift=0,
-        font=dict(
-            size=11,
-            color='dimgray'
-        )
-    )
 )
 
 fig.write_html('graphs/cases/region_cases_publish.html')
@@ -969,7 +982,7 @@ fig.write_html('graphs/cases/region_cases_publish.html')
 fig = make_subplots(3, 3, subplot_titles=(regions), shared_xaxes=True)
 
 # Daily cases by region (specimen date)
-for region, row, col in zip(regions, rows, cols):
+for value, region in enumerate(regions, start=3):
     fig.add_trace(
         go.Scatter(
             x=list(regional['date'][regional['area_name'] == region]),
@@ -988,11 +1001,11 @@ for region, row, col in zip(regions, rows, cols):
             '<b>%{x}</b><br>'+
             '%{text}'
         ),
-        row, col
+        value//3, value%3+1
     )
 
 # Daily cases by region per 100,000 (specimen date)
-for region, row, col in zip(regions, rows, cols):
+for value, region in enumerate(regions, start=3):
     fig.add_trace(
         go.Scatter(
             x=list(regional['date'][regional['area_name'] == region]),
@@ -1012,7 +1025,7 @@ for region, row, col in zip(regions, rows, cols):
             '<b>%{x}</b><br>'+
             '%{text}'
         ),
-        row, col
+        value//3, value%3+1
     )
 
 fig.update_xaxes(
@@ -1031,51 +1044,48 @@ fig.update_yaxes(
 )
 
 fig.update_layout(
-    title="<b>Cases by Specimen Date</b><br><sup>7 day average",
-    font=dict(
-        family='Arial'
+    title=dict(
+        text=("<b>Daily Cases by Region (Cases Reported by Specimen Date)</b>"
+              "<br><sub>7 day rolling average of daily cases by specimen date."
+              "<br>Source: gov.uk"),
+        x=0,
+        xref='paper',
+        y=0.96,
+        yref='container',
+        yanchor='top'
+        
     ),
     plot_bgcolor='white',
     height=800,
+    margin=dict(t=120),
     updatemenus=[
         dict(
             direction='down',
             x=1,
             xanchor='right',
-            y=1.1,
-            yanchor='top',
+            y=1.07,
+            yanchor='bottom',
             buttons=list([
                 dict(label="Cases",
                      method='update',
                      args=[{'visible': [True]*9 + [False]*9},
-                             {'title': ("<b>Cases by Specimen Date</b>"
-                                        "<br><sup>7 day average")}]),
+                             {'title': ("<b>Daily Cases by Region "
+                                        "(Cases Reported by Specimen Date)</b>"
+                                        "<br><sub>7 day rolling average of "
+                                        "daily cases by specimen date."
+                                        "<br>Source: gov.uk")}]),
                 dict(label="Cases per 100,000",
                      method='update',
                      args=[{'visible': [False]*9 + [True]*9},
-                             {'title': ("<b>Cases per 100,000 by Specimen "
-                                        "Date</b><br><sup>7 day average")}]),
+                             {'title': ("<b>Daily Cases per 100,000 by Region "
+                                        "(Cases Reported by Specimen Date)</b>"
+                                        "<br><sub>7 day rolling average of "
+                                        "daily cases per 100,000 by specimen "
+                                        "date."
+                                        "<br>Source: gov.uk")}]),
             ])
         )
     ]
-)
-
-fig.add_annotation(
-    dict(
-        x=0, y=-0.08,
-        text="Source: gov.uk, ONS",
-        showarrow=False,
-        xref='paper',
-        yref='paper',
-        xanchor='left',
-        yanchor='auto',
-        xshift=0,
-        yshift=0,
-        font=dict(
-            size=11,
-            color='dimgray'
-        )
-    )
 )
 
 fig.write_html('graphs/cases/region_cases_specimen.html')
@@ -1094,7 +1104,7 @@ regional = regional[regional['date'] >= '2020-03-01']
 fig = make_subplots(3, 3, subplot_titles=(regions), shared_xaxes=True)
 
 # Daily deaths by region
-for region, row, col in zip(regions, rows, cols):
+for value, region in enumerate(regions, start=3):
     fig.add_trace(
         go.Scatter(
             x=list(regional['date'][regional['area_name'] == region]),
@@ -1113,11 +1123,11 @@ for region, row, col in zip(regions, rows, cols):
             '<b>%{x}</b><br>'+
             '%{text}'
         ),
-        row, col
+        value//3, value%3+1
     )
 
 # Daily deaths by region per 100,000
-for region, row, col in zip(regions, rows, cols):
+for value, region in enumerate(regions, start=3):
     fig.add_trace(
         go.Scatter(
             x=list(regional['date'][regional['area_name'] == region]),
@@ -1137,7 +1147,7 @@ for region, row, col in zip(regions, rows, cols):
             '<b>%{x}</b><br>'+
             '%{text}'
         ),
-        row, col
+        value//3, value%3+1
     )
 
 fig.update_xaxes(
@@ -1156,50 +1166,46 @@ fig.update_yaxes(
 )
 
 fig.update_layout(
-    title="<b>Deaths</b><br><sup>7 day average",
-    font=dict(
-        family='Arial'
+    title=dict(
+        text=("<b>Daily Deaths by Region</b>"
+              "<br><sub>7 day rolling average of daily deaths."
+              "<br>Source: gov.uk"),
+        x=0,
+        xref='paper',
+        y=0.96,
+        yref='container',
+        yanchor='top'
+        
     ),
     plot_bgcolor='white',
     height=800,
+    margin=dict(t=120),
     updatemenus=[
         dict(
             direction='down',
             x=1,
             xanchor='right',
-            y=1.1,
-            yanchor='top',
+            y=1.07,
+            yanchor='bottom',
             buttons=list([
                 dict(label="Deaths",
                      method='update',
                      args=[{'visible': [True]*9 + [False]*9},
-                           {'title': "<b>Deaths</b><br><sup>7 day average"}]),
+                             {'title': ("<b>Daily Deaths by Region</b>"
+                                        "<br><sub>7 day rolling average of "
+                                        "daily deaths."
+                                        "<br>Source: gov.uk")}]),
                 dict(label="Deaths per 100,000",
                      method='update',
                      args=[{'visible': [False]*9 + [True]*9},
-                           {'title': ("<b>Deaths per 100,000</b><br>"
-                                      "<sup>7 day average")}]),
+                             {'title': ("<b>Daily Deaths per 100,000 by Region "
+                                        "</b>"
+                                        "<br><sub>7 day rolling average of "
+                                        "daily deaths per 100,000."
+                                        "<br>Source: gov.uk")}]),
             ])
         )
     ]
-)
-
-fig.add_annotation(
-    dict(
-        x=0, y=-0.08,
-        text="Source: gov.uk, ONS",
-        showarrow=False,
-        xref='paper',
-        yref='paper',
-        xanchor='left',
-        yanchor='auto',
-        xshift=0,
-        yshift=0,
-        font=dict(
-            size=11,
-            color='dimgray'
-        )
-    )
 )
 
 fig.write_html('graphs/deaths/region_daily_deaths.html')
@@ -1260,7 +1266,8 @@ table = go.Figure()
 table.add_trace(
     go.Table(
         header=dict(
-            values=['', '<b>Area</b>', '<b>Cases in Past 7 Days / 100,000</b>'],
+            values=['', '<b>Area</b>', 
+                    '<b>Cases in Past 7 Days <br>/ 100,000</b>'],
             font=dict(
                 color='white'
             ),
@@ -1284,7 +1291,8 @@ table.add_trace(
 table.add_trace(
     go.Table(
         header=dict(
-            values=['', '<b>Area</b>', '<b>Cases in Past 7 Days / 100,000</b>'],
+            values=['', '<b>Area</b>', 
+                    '<b>Cases in Past 7 Days <br>/ 100,000</b>'],
             font=dict(
                 color='white'
             ),
@@ -1306,26 +1314,31 @@ table.add_trace(
 )
 
 table.update_layout(
-    title=("<b>Cases in the Past 7 Days per 100,000</b>"
-           "<br><sup>Cases by Date Published"),
-    font=dict(
-        family='Arial'
+    title=dict(
+        text=("<b>Cases in the Past 7 Days per 100,000</b>"
+              "<br><sub>Cases are by date reported."
+              "<br>Source: gov.uk"),
+        x=0.05, 
+        xref='paper',
+        y=0.96, 
+        yref='container', 
+        yanchor='top'
     ),
     width=600,
     height=600,
     margin=dict(
         b=0,
-        t=50,
+        t=90,
         l=0,
         r=0
     ),
     updatemenus=[
         dict(
             direction='down',
-            x=0.95,
+            x=0.98,
             xanchor='right',
-            y=1.10,
-            yanchor='top',
+            y=1.05,
+            yanchor='bottom',
             buttons=list([
                 dict(label="Sort: Cases",
                      method='update',
@@ -1380,7 +1393,8 @@ table.add_trace(
 table.add_trace(
     go.Table(
         header=dict(
-            values=['', '<b>Area</b>', '<b>Deaths in Past 7 Days / 100,000</b>'],
+            values=['', '<b>Area</b>', 
+                    '<b>Deaths in Past 7 Days <br>/ 100,000</b>'],
             font=dict(
                 color='white'
             ),
@@ -1402,25 +1416,30 @@ table.add_trace(
 )
 
 table.update_layout(
-    title="<b>Deaths in the Past 7 Days per 100,000</b>",
-    font=dict(
-        family='Arial'
+    title=dict(
+        text=("<b>Deaths in the Past 7 Days per 100,000</b>"
+              "<br><sub>Source: gov.uk"),
+        x=0.05, 
+        xref='paper',
+        y=0.96, 
+        yref='container', 
+        yanchor='top'
     ),
     width=600,
     height=600,
     margin=dict(
         b=0,
-        t=20,
+        t=70,
         l=0,
         r=0
     ),
     updatemenus=[
         dict(
             direction='down',
-            x=0.95,
+            x=0.98,
             xanchor='right',
-            y=1.10,
-            yanchor='top',
+            y=1.05,
+            yanchor='bottom',
             buttons=list([
                 dict(label="Sort: Deaths",
                      method='update',
