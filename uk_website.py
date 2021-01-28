@@ -47,6 +47,14 @@ template=dict(
     )
 )
 
+# Ploty mode bar configuration
+config={
+    'modeBarButtonsToRemove': [
+        'toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian',
+        'lasso2d', 'toggleSpikelines', 'autoScale2d', 'zoom2d'
+    ]
+}
+
 # =============================================================================
 # UK data from gov.uk on hospital admissions, cases by specimen and publish
 # date, and deaths.
@@ -186,6 +194,7 @@ fig.update_layout(
            "<br>The data for the most recent 5 days is incomplete, with the "
            "<br>daily cases shown in grey."
            "<br>Source: gov.uk"),
+    height=600,
     margin=dict(t=140),
     legend=dict(
         orientation='h',
@@ -214,7 +223,7 @@ fig.update_layout(
                      args=[{'visible': [False, False, True, True]},
                            {'title': ("<b>Daily Cases by Specimen Date</b><br>"
                                       "<sub>7 day average and daily numbers "
-                                      "of cases by date published.<br>The "
+                                      "of cases by specimen date.<br>The "
                                       "data for the most recent 5 days is "
                                       "incomplete, with the<br>daily cases "
                                       "shown in grey.<br>Source: gov.uk")}]),
@@ -223,7 +232,7 @@ fig.update_layout(
     ]
 )
 
-fig.write_html('graphs/cases/daily_cases_uk.html')
+fig.write_html('graphs/cases/daily_cases_uk.html', config=config)
 
 # ----------------
 # Deaths data - UK
@@ -240,9 +249,9 @@ uk_deaths['deaths_7_day'] = uk_deaths['deaths'].rolling(window=7).mean()
 
 # Thousand comma separated strings to be displayed in labels on graphs for
 # easier reading.
-uk_deaths['deaths_str'] = ["{:,}".format(x).replace(".0", "") 
+uk_deaths['deaths_str'] = ["{:,}".format(x).replace(".0", "")
                            for x in uk_deaths['deaths']]
-uk_deaths['deaths_7_day_str'] = ["{:,}".format(round(x, 2)) 
+uk_deaths['deaths_7_day_str'] = ["{:,}".format(round(x, 2))
                                  for x in uk_deaths['deaths_7_day']]
 
 # -------------------------
@@ -300,6 +309,7 @@ fig.update_layout(
            "<br>The data for the most recent 5 days is incomplete, with the "
            "<br>daily deaths shown in grey."
            "<br>Source: gov.uk"),
+    height=600,
     margin=dict(t=140),
     legend=dict(
         orientation='h',
@@ -308,7 +318,7 @@ fig.update_layout(
     )
 )
 
-fig.write_html('graphs/deaths/daily_deaths_uk.html')
+fig.write_html('graphs/deaths/daily_deaths_uk.html', config=config)
 
 # -----------------------------
 # Hospital admissions data - UK
@@ -381,6 +391,9 @@ fig.update_layout(
     template=template,
     title=("<b>Number of People Admitted to Hospital Each day</b>"
            "<br><sub>Source: gov.uk"),
+    yaxis_separatethousands=True,
+    height=600,
+    margin=dict(t=70),
     legend=dict(
         orientation='h',
         x=0.5,
@@ -388,7 +401,7 @@ fig.update_layout(
     )
 )
 
-fig.write_html('graphs/admissions/daily_admissions_uk.html')
+fig.write_html('graphs/admissions/daily_admissions_uk.html', config=config)
 
 # -----------------------------
 # Graph - daily admissions UK
@@ -424,6 +437,7 @@ fig.update_layout(
            "<br><sub>Note - the definition of a COVID-19 patient differs "
            "between England, Wales, Scotland and Northern Ireland."
            "<br>Source: gov.uk"),
+    height=600,
     margin=dict(t=100),
     legend=dict(
         orientation='h',
@@ -432,7 +446,7 @@ fig.update_layout(
     )
 )
 
-fig.write_html('graphs/admissions/in_hospital_uk.html')
+fig.write_html('graphs/admissions/in_hospital_uk.html', config=config)
 
 # =============================================================================
 # Vaccinations data from gov.uk
@@ -512,10 +526,11 @@ fig.update_layout(
            "Dose</b>"
            "<br><sub>The date is the date the vaccination was reported."
            "<br>Source: gov.uk"),
+    height=600,
     margin=dict(t=100)
 )
 
-fig.write_html('graphs/vaccine/vaccine_total.html')
+fig.write_html('graphs/vaccine/vaccine_total.html', config=config)
 
 # -------------------------------
 # Graph - percentage vaccinated
@@ -668,7 +683,7 @@ fig.update_layout(
     margin=dict(t=100)
 )
 
-fig.write_html('graphs/vaccine/daily_vaccinations.html')
+fig.write_html('graphs/vaccine/daily_vaccinations.html', config=config)
 
 # ------------------------------------------
 # % of England Population Over 80 Vaccinated
@@ -753,7 +768,7 @@ fig.add_trace(
 fig.update_layout(
     title=dict(
         text=("<b>% of England's Population Aged 80 or Over Who Have Received "
-              "Vaccination (as of " + most_recent_thursday.replace("-", " ")
+              "Vaccination<br>(as of " + most_recent_thursday.replace("-", " ")
               + ")</b>"
               "<br><sub>Source: NHS England"),
         x=0,
@@ -774,8 +789,8 @@ fig.update_layout(
         linewidth=2,
         linecolor='black',
     ),
-    height=180,
-    margin=dict(t=70, b=0),
+    height=210,
+    margin=dict(t=100, b=0),
     plot_bgcolor='white'
 )
 
@@ -838,7 +853,7 @@ regional['deaths_per_100k'] = (regional['deaths_7_day']
 
 # Create thousand commas separated strings to use in the plots as they are
 # easier to read.
-for c in ['specimen_7_day', 'publish_7_day', 'deaths_7_day', 
+for c in ['specimen_7_day', 'publish_7_day', 'deaths_7_day',
           'specimen_per_100k', 'publish_per_100k', 'deaths_per_100k']:
     regional[c + '_str'] = ["{:,}".format(round(x, 2)) for x in regional[c]]
 
@@ -962,7 +977,7 @@ fig.update_layout(
     ]
 )
 
-fig.write_html('graphs/cases/region_cases_publish.html')
+fig.write_html('graphs/cases/region_cases_publish.html', config=config)
 
 # ---------------------------------------
 # Graph - regional cases by specimen date
@@ -1078,7 +1093,7 @@ fig.update_layout(
     ]
 )
 
-fig.write_html('graphs/cases/region_cases_specimen.html')
+fig.write_html('graphs/cases/region_cases_specimen.html', config=config)
 
 # ------
 # Deaths
@@ -1198,7 +1213,7 @@ fig.update_layout(
     ]
 )
 
-fig.write_html('graphs/deaths/region_daily_deaths.html')
+fig.write_html('graphs/deaths/region_daily_deaths.html', config=config)
 
 # =============================================================================
 # Council data
@@ -1331,10 +1346,10 @@ table.update_layout(
             y=1.05,
             yanchor='bottom',
             buttons=list([
-                dict(label="Sort: Cases",
+                dict(label="Sort by: Cases",
                      method='update',
                      args=[{'visible': [True, False]}]),
-                dict(label="Sort: Area Name",
+                dict(label="Sort by: Area Name",
                      method='update',
                      args=[{'visible': [False, True]}]),
             ])
@@ -1360,7 +1375,7 @@ table = go.Figure()
 table.add_trace(
     go.Table(
         header=dict(
-            values=['', '<b>Area</b>', 
+            values=['', '<b>Area</b>',
                     '<b>Deaths in Past 7 Days / 100,000</b>'],
             font=dict(
                 color='white'
@@ -1433,10 +1448,10 @@ table.update_layout(
             y=1.05,
             yanchor='bottom',
             buttons=list([
-                dict(label="Sort: Deaths",
+                dict(label="Sort by: Deaths",
                      method='update',
                      args=[{'visible': [True, False]}]),
-                dict(label="Sort: Area Name",
+                dict(label="Sort by: Area Name",
                      method='update',
                      args=[{'visible': [False, True]}]),
             ])
