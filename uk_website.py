@@ -611,7 +611,7 @@ fig.update_layout(
     plot_bgcolor='white'
 )
 
-fig.write_html('graphs/vaccine/percentage_vaccinated.html')
+fig.write_html('graphs/vaccine/percentage_vaccinated.html', config=config)
 
 # ----------------------------
 # Graph - daily vaccinations
@@ -794,7 +794,7 @@ fig.update_layout(
     plot_bgcolor='white'
 )
 
-fig.write_html('graphs/vaccine/percentage_vaccinated_80.html')
+fig.write_html('graphs/vaccine/percentage_vaccinated_80.html', config=config)
 
 # =============================================================================
 # Regional data
