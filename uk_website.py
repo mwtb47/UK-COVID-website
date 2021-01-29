@@ -589,7 +589,8 @@ fig.add_trace(
 fig.update_layout(
     title=dict(
         text=("<b>% of UK Population Who Have Received Vaccination</b><br>"
-              "<sub>The date is the date the vaccination was reported."
+              "<sub>Number of vaccinations reported as of "
+              + most_recent_thursday.replace("-", " ")
               "<br>Source: gov.uk"),
         x=0,
         xref='paper',
@@ -771,9 +772,9 @@ fig.add_trace(
 fig.update_layout(
     title=dict(
         text=("<b>% of England's Population Aged 80 or Over Who Have Received "
-              "Vaccination</b><br>Number of vaccinations reported as of "
+              "Vaccination</b><br><sub>Number of vaccinations reported as of "
               + most_recent_thursday.replace("-", " ")
-              + "<br><sub>Source: NHS England"),
+              + "<br>Source: NHS England"),
         x=0,
         xref='paper',
         y=0.85,
