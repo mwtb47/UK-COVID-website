@@ -590,8 +590,8 @@ fig.update_layout(
     title=dict(
         text=("<b>% of UK Population Who Have Received Vaccination</b><br>"
               "<sub>Number of vaccinations reported as of "
-              + most_recent_thursday.replace("-", " ")
-              "<br>Source: gov.uk"),
+              + vaccine['date'].max().strftime("%d %B %Y")
+              + "<br>Source: gov.uk"),
         x=0,
         xref='paper',
         y=0.85,
