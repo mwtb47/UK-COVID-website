@@ -458,6 +458,8 @@ vaccine_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=overview"
 
 vaccine = pd.read_csv(vaccine_url)
 
+vaccine['date'] = pd.to_datetime(vaccine['date'], format='%Y-%m-%d')
+
 vaccine = vaccine[vaccine['date'] >= '2021-01-10'].sort_values('date')
 
 vaccine.columns = ['date', 'area_type', 'area_code', 'area_name',
@@ -524,8 +526,9 @@ fig.update_layout(
     template=template,
     title=("<b>Number of People Who Have Received the 1st and 2nd Vaccine "
            "Dose</b>"
-           "<br><sub>The date is the date the vaccination was reported."
-           "<br>Source: gov.uk"),
+           "<br><sub>Number of vaccinations reported as of "
+           + vaccine['date'].max().strftime("%d %B %Y")
+           + "<br>Source: gov.uk"),
     height=600,
     margin=dict(t=100)
 )
@@ -768,9 +771,9 @@ fig.add_trace(
 fig.update_layout(
     title=dict(
         text=("<b>% of England's Population Aged 80 or Over Who Have Received "
-              "Vaccination<br>(as of " + most_recent_thursday.replace("-", " ")
-              + ")</b>"
-              "<br><sub>Source: NHS England"),
+              "Vaccination</b><br>Number of vaccinations reported as of "
+              + most_recent_thursday.replace("-", " ")
+              + "<br><sub>Source: NHS England"),
         x=0,
         xref='paper',
         y=0.85,
