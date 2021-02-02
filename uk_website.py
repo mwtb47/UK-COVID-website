@@ -555,7 +555,7 @@ fig = go.Figure()
 fig.add_trace(
     go.Bar(
         name="Vaccinated",
-        y=['2 Doses', '1 Dose'],
+        y=['2 Doses', 'At least<br>1 Dose'],
         x=x,
         marker=dict(color='rgb(150, 65, 65)'),
         orientation='h',
@@ -578,7 +578,7 @@ fig.add_trace(
 fig.add_trace(
     go.Bar(
         name="Not Vaccinated",
-        y=['2 Doses', '1 Dose'],
+        y=['2 Doses', 'At least<br>1 Dose'],
         x=y,
         marker=dict(color='rgba(140, 140, 140, 0.8)'),
         orientation='h',
