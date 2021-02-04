@@ -1,9 +1,9 @@
-# =============================================================================
-# Creates plots summarising data on cases, deaths and hospitalisations using
-# data gov.uk
+# ======================================================================
+# Creates plots summarising data on cases, deaths and hospitalisations
+# using data gov.uk
 #
 # Contact: mwt.barnes@outlook.com
-# =============================================================================
+# ======================================================================
 
 import datetime
 
@@ -55,10 +55,10 @@ config={
     ]
 }
 
-# =============================================================================
-# UK data from gov.uk on hospital admissions, cases by specimen and publish
-# date, and deaths.
-# =============================================================================
+# ======================================================================
+# UK data from gov.uk on hospital admissions, cases by specimen and 
+# publish date, and deaths.
+# ======================================================================
 
 uk_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=overview"
           "&metric=newAdmissions"
@@ -448,9 +448,9 @@ fig.update_layout(
 
 fig.write_html('graphs/admissions/in_hospital_uk.html', config=config)
 
-# =============================================================================
+# ======================================================================
 # Vaccinations data from gov.uk
-# =============================================================================
+# ======================================================================
 
 vaccine_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=overview"
                "&metric=cumPeopleVaccinatedFirstDoseByPublishDate"
@@ -465,8 +465,8 @@ vaccine = vaccine[vaccine['date'] >= '2021-01-10'].sort_values('date')
 vaccine.columns = ['date', 'area_type', 'area_code', 'area_name',
                    'total_first', 'total_second']
 
-# Create thousand commas separated strings to use in the plots as they are
-# easier to read.
+# Create thousand commas separated strings to use in the plots as they 
+# are easier to read.
 cols = ['total_first', 'total_second']
 for c in cols:
     vaccine[c + '_str'] = ["{:,}".format(int(x)) for x in vaccine[c]]
@@ -693,16 +693,16 @@ fig.write_html('graphs/vaccine/daily_vaccinations.html', config=config)
 # % of England Population Over 80 Vaccinated
 # ------------------------------------------
 
-# Date is released every Thursday and the URL contains the date therefore the
-# date of the most recent Thursday needs to be found in the form
-# 14-January-2021
+# Data is released every Thursday and the URL contains the date 
+# therefore the date of the most recent Thursday needs to be found in 
+# the form 14-January-2021
 date_range = pd.Series(pd.date_range('14-01-2021', '31-12-2021', freq='7D'))
 date_today = pd.to_datetime(datetime.date.today())
 most_recent_thursday = date_range[date_range.le(date_today)].max()
-most_recent_thursday = most_recent_thursday.strftime("%d-%B-%Y")
+most_recent_thursday = most_recent_thursday.strftime("%-d-%B-%Y")
 
 vaccine_80_url = ("https://www.england.nhs.uk/statistics/wp-content/uploads/"
-                  "sites/2/2021/01/COVID-19-weekly-announced-vaccinations-"
+                  "sites/2/2021/02/COVID-19-weekly-announced-vaccinations-"
                   + most_recent_thursday + ".xlsx")
 
 vaccine_80 = pd.read_excel(
@@ -800,9 +800,9 @@ fig.update_layout(
 
 fig.write_html('graphs/vaccine/percentage_vaccinated_80.html', config=config)
 
-# =============================================================================
+# ======================================================================
 # Regional data
-# =============================================================================
+# ======================================================================
 
 # -----
 # Cases
@@ -1219,9 +1219,9 @@ fig.update_layout(
 
 fig.write_html('graphs/deaths/region_daily_deaths.html', config=config)
 
-# =============================================================================
+# ======================================================================
 # Council data
-# =============================================================================
+# ======================================================================
 
 council_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=ltla"
                "&metric=newCasesByPublishDate"
