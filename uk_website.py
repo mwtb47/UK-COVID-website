@@ -578,7 +578,7 @@ fig.add_trace(
 fig.add_trace(
     go.Bar(
         name="Not Vaccinated",
-        y=['2 Doses', 'At least<br>1 Dose'],
+        y=['2 Doses', 'At Least<br>1 Dose'],
         x=y,
         marker=dict(color='rgba(140, 140, 140, 0.8)'),
         orientation='h',
@@ -709,40 +709,43 @@ vaccine_80 = pd.read_excel(
     vaccine_80_url,
     sheet_name='Vaccinations by Region & Age',
     skiprows=11,
-    usecols='B,D,E,G,H')
+    usecols='B,D,E,F,G,I,J,K,L,P,Q,R,S')
 
 vaccine_80 = vaccine_80[vaccine_80['Region of Residence'] == 'Total']
 
-vaccine_80.columns = ['region', 'under_80_first', 'over_80_first',
-                      'under_80_second', 'over_80_second']
+vaccine_80 = pd.DataFrame(
+    {
+        'age': ['Under 70', '70-74', '75-79', 'Over 80']*2,
+        'dose': ['2 Doses']*4 + ['1+ Doses']*4, 
+        'vaccinations': (list(vaccine_80.iloc[0,5:9]) 
+                         + list(vaccine_80.iloc[0,1:5])),
+        'population': list(vaccine_80.iloc[0,9:13])*2,
+        'color': ['rgb(150, 65, 65)']*4 + ['rgb(200, 90, 90)']*4
+    }
+)
+
+vaccine_80['percent'] = (vaccine_80['vaccinations'] / vaccine_80['population'] 
+                         * 100)
+
+vaccine_80['percent_not'] = (100 - vaccine_80['vaccinations'] 
+                             / vaccine_80['population'] * 100)
 
 # -------------------------------------
 # Graph - percentage vaccinated over 80
 # Filename: percentage_vaccinated_80
 # -------------------------------------
 
-# UK population 80+ years old
-pop = population[population['Name'] == 'UNITED KINGDOM'][
-    list(range(80, 90)) + ["90+"]]
-pop_over_80 = pop.iloc[0,:].sum()
-
-dose_2_percent = vaccine_80['over_80_second'].max() / pop_over_80 * 100
-dose_1_percent = vaccine_80['over_80_first'].max() / pop_over_80 * 100
-
-x = [dose_2_percent, dose_1_percent]
-y = [100 - dose_2_percent, 100 - dose_1_percent]
 
 fig = go.Figure()
 
-# Percentage of people 80+ who have received either 1 or 2 doses
 fig.add_trace(
     go.Bar(
         name="Vaccinated",
-        y=['2 Doses', 'At Least<br>1 Dose'],
-        x=x,
-        marker=dict(color='rgb(150, 65, 65)'),
+        y=[['<b>Under 70</b>', '<b>70-74</b>', '<b>75-79</b>', 
+            '<b>Over 80</b>']*2, vaccine_80['dose']],
+        x=list(vaccine_80['percent']),
         orientation='h',
-        text=['2 Doses', 'At Least 1 Dose'],
+        marker=dict(color=vaccine_80['color']),
         hoverlabel=dict(
             bgcolor='white',
             bordercolor='gray',
@@ -752,37 +755,40 @@ fig.add_trace(
         ),
         hovertemplate=
         '<extra></extra>'+
-        '<b>%{text}</b><br>'+
+        '<b>%{y[0]} - %{y[1]}</b><br>'+
         '%{x:.2f}%'
     )
 )
-
-# Percentage of people 80+ who have not received either 1 or 2 doses
 fig.add_trace(
     go.Bar(
         name="Not Vaccinated",
-        y=['2 Doses', 'At Least<br>1 Dose'],
-        x=y,
-        marker=dict(color='rgba(140, 140, 140, 0.8)'),
+        y=[['<b>Under 70</b>', '<b>70-74</b>', '<b>75-79</b>', 
+            '<b>Over 80</b>']*2, vaccine_80['dose']],
+        x=list(vaccine_80['percent_not']),
         orientation='h',
+        marker=dict(color='rgba(140, 140, 140, 0.5)'),
         hoverinfo='skip'
     )
 )
 
 fig.update_layout(
     title=dict(
-        text=("<b>% of England's Population Aged 80 or Over Who Have Received "
-              "Vaccination</b><br><sub>Number of vaccinations reported as of "
+        text=("<b>% of England's Population Who Have Received At Least 1 Dose "
+              "or 2 Doses<br>of Vaccination by Age Group</b><br><sub>Number "
+              "of vaccinations reported as of " 
               + most_recent_thursday.replace("-", " ")
               + "<br>Source: NHS England"),
         x=0,
         xref='paper',
-        y=0.85,
+        y=0.96,
         yref='container',
         yanchor='top'
     ),
-    barmode='stack',
+    barmode='stack', 
     legend_traceorder='normal',
+    height=600,
+    margin=dict(t=110, b=0, l=115),
+    plot_bgcolor='white',
     xaxis=dict(
         linewidth=2,
         linecolor='black',
@@ -792,10 +798,8 @@ fig.update_layout(
     yaxis=dict(
         linewidth=2,
         linecolor='black',
-    ),
-    height=210,
-    margin=dict(t=100, b=0),
-    plot_bgcolor='white'
+        showdividers=False
+    )
 )
 
 fig.write_html('graphs/vaccine/percentage_vaccinated_80.html', config=config)
