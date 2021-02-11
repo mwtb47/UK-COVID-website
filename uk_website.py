@@ -56,7 +56,7 @@ config={
 }
 
 # ======================================================================
-# UK data from gov.uk on hospital admissions, cases by specimen and 
+# UK data from gov.uk on hospital admissions, cases by specimen and
 # publish date, and deaths.
 # ======================================================================
 
@@ -465,7 +465,7 @@ vaccine = vaccine[vaccine['date'] >= '2021-01-10'].sort_values('date')
 vaccine.columns = ['date', 'area_type', 'area_code', 'area_name',
                    'total_first', 'total_second']
 
-# Create thousand commas separated strings to use in the plots as they 
+# Create thousand commas separated strings to use in the plots as they
 # are easier to read.
 cols = ['total_first', 'total_second']
 for c in cols:
@@ -484,7 +484,7 @@ fig.add_trace(
         x=list(vaccine['date']),
         y=list(vaccine['total_first']),
         marker=dict(color='rgb(150, 65, 65)'),
-        name="1st Dose",
+        name="At Least 1 Dose",
         text=vaccine['total_first_str'],
         hoverlabel=dict(
             bgcolor='white',
@@ -496,7 +496,7 @@ fig.add_trace(
         hovertemplate=
         '<extra></extra>'+
         '<b>%{x}</b><br>'+
-        '<b>1st Vaccine Dose</b>: %{text}'
+        '<b>At Least 1 Dose</b>: %{text}'
     )
 )
 
@@ -506,7 +506,7 @@ fig.add_trace(
         x=list(vaccine['date']),
         y=list(vaccine['total_second']),
         marker=dict(color='darkblue'),
-        name="2nd Dose",
+        name="2 Doses",
         text=vaccine['total_second_str'],
         hoverlabel=dict(
             bgcolor='white',
@@ -518,14 +518,14 @@ fig.add_trace(
         hovertemplate=
         '<extra></extra>'+
         '<b>%{x}</b><br>'+
-        '<b>2nd Vaccine Dose</b>: %{text}'
+        '<b>2 Doses</b>: %{text}'
     )
 )
 
 fig.update_layout(
     template=template,
-    title=("<b>Number of People Who Have Received the 1st and 2nd Vaccine "
-           "Dose</b>"
+    title=("<b>Number of People Who Have Received the 1st and 2nd Dose "
+           "of Vaccine</b>"
            "<br><sub>Number of vaccinations reported as of "
            + vaccine['date'].max().strftime("%d %B %Y")
            + "<br>Source: gov.uk"),
@@ -555,11 +555,11 @@ fig = go.Figure()
 fig.add_trace(
     go.Bar(
         name="Vaccinated",
-        y=['2 Doses', 'At least<br>1 Dose'],
+        y=['2 Doses', 'At Least<br>1 Dose'],
         x=x,
         marker=dict(color='rgb(150, 65, 65)'),
         orientation='h',
-        text=['2 Doses', '1 Dose'],
+        text=['2 Doses', 'At Least 1 Dose'],
         hoverlabel=dict(
             bgcolor='white',
             bordercolor='gray',
@@ -693,8 +693,8 @@ fig.write_html('graphs/vaccine/daily_vaccinations.html', config=config)
 # % of England Population Over 80 Vaccinated
 # ------------------------------------------
 
-# Data is released every Thursday and the URL contains the date 
-# therefore the date of the most recent Thursday needs to be found in 
+# Data is released every Thursday and the URL contains the date
+# therefore the date of the most recent Thursday needs to be found in
 # the form 14-January-2021
 date_range = pd.Series(pd.date_range('14-01-2021', '31-12-2021', freq='7D'))
 date_today = pd.to_datetime(datetime.date.today())
@@ -738,11 +738,11 @@ fig = go.Figure()
 fig.add_trace(
     go.Bar(
         name="Vaccinated",
-        y=['2 Doses', '1 Dose'],
+        y=['2 Doses', 'At Least<br>1 Dose'],
         x=x,
         marker=dict(color='rgb(150, 65, 65)'),
         orientation='h',
-        text=['2 Doses', '1 Dose'],
+        text=['2 Doses', 'At Least 1 Dose'],
         hoverlabel=dict(
             bgcolor='white',
             bordercolor='gray',
@@ -761,7 +761,7 @@ fig.add_trace(
 fig.add_trace(
     go.Bar(
         name="Not Vaccinated",
-        y=['2 Doses', '1 Dose'],
+        y=['2 Doses', 'At Least<br>1 Dose'],
         x=y,
         marker=dict(color='rgba(140, 140, 140, 0.8)'),
         orientation='h',
