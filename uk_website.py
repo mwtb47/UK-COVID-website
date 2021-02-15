@@ -720,32 +720,26 @@ vaccine_80 = pd.DataFrame(
         'vaccinations': (list(vaccine_80.iloc[0,5:9]) 
                          + list(vaccine_80.iloc[0,1:5])),
         'population': list(vaccine_80.iloc[0,9:13])*2,
-        'color': ['rgb(150, 65, 65)']*4 + ['rgb(200, 90, 90)']*4
     }
 )
 
 vaccine_80['percent'] = (vaccine_80['vaccinations'] / vaccine_80['population'] 
                          * 100)
 
-vaccine_80['percent_not'] = (100 - vaccine_80['vaccinations'] 
-                             / vaccine_80['population'] * 100)
-
-# -------------------------------------
-# Graph - percentage vaccinated over 80
-# Filename: percentage_vaccinated_80
-# -------------------------------------
-
+# ------------------------------------
+# Graph - percentage vaccinated by age
+# Filename: percentage_vaccinated_age
+# ------------------------------------
 
 fig = go.Figure()
 
+# At least 1 dose
 fig.add_trace(
     go.Bar(
-        name="Vaccinated",
-        y=[['<b>Under 70</b>', '<b>70-74</b>', '<b>75-79</b>', 
-            '<b>Over 80</b>']*2, vaccine_80['dose']],
-        x=list(vaccine_80['percent']),
-        orientation='h',
-        marker=dict(color=vaccine_80['color']),
+        name="At Least 1 Dose",
+        x=list(vaccine_80['age'][vaccine_80['dose']=='1+ Doses']),
+        y=list(vaccine_80['percent'][vaccine_80['dose']=='1+ Doses']),
+        marker=dict(color='rgb(200, 110, 110)'),
         hoverlabel=dict(
             bgcolor='white',
             bordercolor='gray',
@@ -755,19 +749,29 @@ fig.add_trace(
         ),
         hovertemplate=
         '<extra></extra>'+
-        '<b>%{y[0]} - %{y[1]}</b><br>'+
-        '%{x:.2f}%'
+        '<b>%{x} - 1+ Doses</b><br>'+
+        '%{y:.2f}%'
     )
 )
+
+# 2 Doses
 fig.add_trace(
     go.Bar(
-        name="Not Vaccinated",
-        y=[['<b>Under 70</b>', '<b>70-74</b>', '<b>75-79</b>', 
-            '<b>Over 80</b>']*2, vaccine_80['dose']],
-        x=list(vaccine_80['percent_not']),
-        orientation='h',
-        marker=dict(color='rgba(140, 140, 140, 0.5)'),
-        hoverinfo='skip'
+        name="2 Doses",
+        x=list(vaccine_80['age'][vaccine_80['dose']=='2 Doses']),
+        y=list(vaccine_80['percent'][vaccine_80['dose']=='2 Doses']),
+        marker=dict(color='rgb(150, 65, 65)'),
+        hoverlabel=dict(
+            bgcolor='white',
+            bordercolor='gray',
+            font=dict(
+                color='black'
+            )
+        ),
+        hovertemplate=
+        '<extra></extra>'+
+        '<b>%{x} - 2 Doses</b><br>'+
+        '%{y:.2f}%'
     )
 )
 
@@ -784,25 +788,23 @@ fig.update_layout(
         yref='container',
         yanchor='top'
     ),
-    barmode='stack', 
-    legend_traceorder='normal',
+    barmode='group',
     height=600,
-    margin=dict(t=110, b=0, l=115),
+    margin=dict(t=110),
     plot_bgcolor='white',
     xaxis=dict(
         linewidth=2,
         linecolor='black',
-        gridwidth=1,
-        gridcolor='rgb(220, 220, 220)'
     ),
     yaxis=dict(
         linewidth=2,
         linecolor='black',
-        showdividers=False
+        gridwidth=1,
+        gridcolor='rgb(220, 220, 220)'
     )
 )
 
-fig.write_html('graphs/vaccine/percentage_vaccinated_80.html', config=config)
+fig.write_html('graphs/vaccine/percentage_vaccinated_age.html', config=config)
 
 # ======================================================================
 # Regional data
