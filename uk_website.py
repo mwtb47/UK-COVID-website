@@ -77,6 +77,13 @@ population = pd.read_excel(
     sheet_name='MYE2 - Persons',
     skiprows=4)
 
+population = population.melt(
+    id_vars='Name', 
+    value_vars=list(range(90)) + ['90+'],
+    var_name='age',
+    value_name='population'
+)
+
 # ---------------
 # Cases data - UK
 # ---------------
@@ -541,7 +548,7 @@ fig.write_html('graphs/vaccine/vaccine_total.html', config=config)
 # -------------------------------
 
 # UK total population
-uk_pop = population.iloc[0]['All ages']
+uk_pop = population[population['Name'] == 'UNITED KINGDOM']['population'].sum()
 
 dose_2_percent = vaccine['total_second'].max() / uk_pop * 100
 dose_1_percent = vaccine['total_first'].max() / uk_pop * 100
@@ -689,9 +696,19 @@ fig.update_layout(
 
 fig.write_html('graphs/vaccine/daily_vaccinations.html', config=config)
 
-# ------------------------------------------
-# % of England Population Over 80 Vaccinated
-# ------------------------------------------
+# -----------------------------------------
+# % of England Population Vaccinated by Age
+# -----------------------------------------
+
+england = population[population['Name'] == 'ENGLAND']
+
+age_group_pop = [
+    england[england['age'].isin(range(70))]['population'].sum(),
+    england[england['age'].isin(range(70, 75))]['population'].sum(),
+    england[england['age'].isin(range(75, 80))]['population'].sum(),
+    england[england['age'].isin(
+        list(range(80, 90)) + ['90+'])]['population'].sum()
+]
 
 # Data is released every Thursday and the URL contains the date
 # therefore the date of the most recent Thursday needs to be found in
@@ -701,30 +718,30 @@ date_today = pd.to_datetime(datetime.date.today())
 most_recent_thursday = date_range[date_range.le(date_today)].max()
 most_recent_thursday = most_recent_thursday.strftime("%-d-%B-%Y")
 
-vaccine_80_url = ("https://www.england.nhs.uk/statistics/wp-content/uploads/"
+vaccine_age_url = ("https://www.england.nhs.uk/statistics/wp-content/uploads/"
                   "sites/2/2021/02/COVID-19-weekly-announced-vaccinations-"
                   + most_recent_thursday + ".xlsx")
 
-vaccine_80 = pd.read_excel(
-    vaccine_80_url,
+vaccine_age = pd.read_excel(
+    vaccine_age_url,
     sheet_name='Vaccinations by Region & Age',
     skiprows=11,
-    usecols='B,D,E,F,G,I,J,K,L,P,Q,R,S')
+    usecols='B,D,E,F,G,I,J,K,L')
 
-vaccine_80 = vaccine_80[vaccine_80['Region of Residence'] == 'Total']
+vaccine_age = vaccine_age[vaccine_age['Region of Residence'] == 'Total']
 
-vaccine_80 = pd.DataFrame(
+vaccine_age = pd.DataFrame(
     {
         'age': ['Under 70', '70-74', '75-79', 'Over 80']*2,
         'dose': ['2 Doses']*4 + ['1+ Doses']*4, 
-        'vaccinations': (list(vaccine_80.iloc[0,5:9]) 
-                         + list(vaccine_80.iloc[0,1:5])),
-        'population': list(vaccine_80.iloc[0,9:13])*2,
+        'vaccinations': (list(vaccine_age.iloc[0,5:9]) 
+                         + list(vaccine_age.iloc[0,1:5])),
+        'population': age_group_pop * 2
     }
 )
 
-vaccine_80['percent'] = (vaccine_80['vaccinations'] / vaccine_80['population'] 
-                         * 100)
+vaccine_age['percent'] = (vaccine_age['vaccinations'] 
+                          / vaccine_age['population'] * 100)
 
 # ------------------------------------
 # Graph - percentage vaccinated by age
@@ -737,8 +754,8 @@ fig = go.Figure()
 fig.add_trace(
     go.Bar(
         name="At Least 1 Dose",
-        x=list(vaccine_80['age'][vaccine_80['dose']=='1+ Doses']),
-        y=list(vaccine_80['percent'][vaccine_80['dose']=='1+ Doses']),
+        x=list(vaccine_age['age'][vaccine_age['dose']=='1+ Doses']),
+        y=list(vaccine_age['percent'][vaccine_age['dose']=='1+ Doses']),
         marker=dict(color='rgb(200, 110, 110)'),
         hoverlabel=dict(
             bgcolor='white',
@@ -758,8 +775,8 @@ fig.add_trace(
 fig.add_trace(
     go.Bar(
         name="2 Doses",
-        x=list(vaccine_80['age'][vaccine_80['dose']=='2 Doses']),
-        y=list(vaccine_80['percent'][vaccine_80['dose']=='2 Doses']),
+        x=list(vaccine_age['age'][vaccine_age['dose']=='2 Doses']),
+        y=list(vaccine_age['percent'][vaccine_age['dose']=='2 Doses']),
         marker=dict(color='rgb(150, 65, 65)'),
         hoverlabel=dict(
             bgcolor='white',
