@@ -78,7 +78,7 @@ population = pd.read_excel(
     skiprows=4)
 
 population = population.melt(
-    id_vars='Name', 
+    id_vars=['Name', 'Code'], 
     value_vars=list(range(90)) + ['90+'],
     var_name='age',
     value_name='population'
@@ -856,7 +856,8 @@ def july_1(df):
     df.loc[df['date']=='2020-07-01', 'publish'] = mean
     return df
 
-regional = regional.groupby('area_name', as_index=False).apply(july_1)
+regional = regional.groupby('area_name', as_index=False).apply(
+    july_1).reset_index(drop=True)
 
 # 7 day rolling average for cases by specimen date and publish date, and daily
 # deaths.
@@ -865,18 +866,21 @@ grouped_regions = grouped_regions[['specimen', 'publish', 'deaths']].apply(
     lambda x: x.rolling(window=7, min_periods=1).mean())
 regional[['specimen_7_day', 'publish_7_day', 'deaths_7_day']] = grouped_regions
 
+# Population totals by region
+regional_pop = population.groupby('Code', as_index=False)['population'].sum()
+
 regional = regional.merge(
-    population[['Code', 'All ages']],
+    regional_pop,
     left_on='area_code',
     right_on='Code',
     how='left')
 
 regional['specimen_per_100k'] = (regional['specimen_7_day']
-                                 / regional['All ages'] * 100000)
+                                 / regional['population'] * 100000)
 regional['publish_per_100k'] = (regional['publish_7_day']
-                                / regional['All ages'] * 100000)
+                                / regional['population'] * 100000)
 regional['deaths_per_100k'] = (regional['deaths_7_day']
-                               / regional['All ages'] * 100000)
+                               / regional['population'] * 100000)
 
 # Create thousand commas separated strings to use in the plots as they are
 # easier to read.
@@ -904,7 +908,7 @@ for value, region in enumerate(regions, start=3):
             x=list(regional['date'][regional['area_name'] == region]),
             y=list(regional['publish_7_day'][regional['area_name'] == region]),
             showlegend=False,
-            text=regional['publish_7_day_str'],
+            text=regional['publish_7_day_str'][regional['area_name'] == region],
             hoverlabel=dict(
                 bgcolor='white',
                 bordercolor='gray',
@@ -928,7 +932,7 @@ for value, region in enumerate(regions, start=3):
             y=list(regional['publish_per_100k'][regional['area_name'] == region]),
             showlegend=False,
             visible=False,
-            text=regional['publish_per_100k_str'],
+            text=regional['publish_per_100k_str'][regional['area_name'] == region],
             hoverlabel=dict(
                 bgcolor='white',
                 bordercolor='gray',
@@ -1020,7 +1024,7 @@ for value, region in enumerate(regions, start=3):
             x=list(regional['date'][regional['area_name'] == region]),
             y=list(regional['specimen_7_day'][regional['area_name'] == region]),
             showlegend=False,
-            text=regional['specimen_7_day_str'],
+            text=regional['specimen_7_day_str'][regional['area_name'] == region],
             hoverlabel=dict(
                 bgcolor='white',
                 bordercolor='gray',
@@ -1044,7 +1048,7 @@ for value, region in enumerate(regions, start=3):
             y=list(regional['specimen_per_100k'][regional['area_name'] == region]),
             showlegend=False,
             visible=False,
-            text=regional['specimen_per_100k_str'],
+            text=regional['specimen_per_100k_str'][regional['area_name'] == region],
             hoverlabel=dict(
                 bgcolor='white',
                 bordercolor='gray',
@@ -1142,7 +1146,7 @@ for value, region in enumerate(regions, start=3):
             x=list(regional['date'][regional['area_name'] == region]),
             y=list(regional['deaths_7_day'][regional['area_name'] == region]),
             showlegend=False,
-            text=regional['deaths_7_day_str'],
+            text=regional['deaths_7_day_str'][regional['area_name'] == region],
             hoverlabel=dict(
                 bgcolor='white',
                 bordercolor='gray',
@@ -1166,7 +1170,7 @@ for value, region in enumerate(regions, start=3):
             y=list(regional['deaths_per_100k'][regional['area_name'] == region]),
             showlegend=False,
             visible=False,
-            text=regional['deaths_per_100k_str'],
+            text=regional['deaths_per_100k_str'][regional['area_name'] == region],
             hoverlabel=dict(
                 bgcolor='white',
                 bordercolor='gray',
@@ -1265,15 +1269,15 @@ council_week = grouped_council[['publish', 'deaths']].apply(
     lambda x: x.iloc[-7:].sum())
 
 council_week = council_week.merge(
-    population[['Code', 'All ages']],
+    regional_pop,
     left_on='area_code',
     right_on='Code',
     how='left')
 
 council_week['cases_per_100000'] = (council_week['publish']
-                                    / council_week['All ages'] * 100000)
+                                    / council_week['population'] * 100000)
 council_week['deaths_per_100000'] = (council_week['deaths']
-                                     / council_week['All ages'] * 100000)
+                                     / council_week['population'] * 100000)
 
 # --------------------------------------------
 # Table - cases in the past 7 days per 100,000
