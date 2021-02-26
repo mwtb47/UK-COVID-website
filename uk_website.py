@@ -78,7 +78,7 @@ population = pd.read_excel(
     skiprows=4)
 
 population = population.melt(
-    id_vars=['Name', 'Code'], 
+    id_vars=['Name', 'Code'],
     value_vars=list(range(90)) + ['90+'],
     var_name='age',
     value_name='population'
@@ -734,14 +734,14 @@ vaccine_age = vaccine_age[vaccine_age['NHS Region of Residence'] == 'Total']
 vaccine_age = pd.DataFrame(
     {
         'age': ['Under 65', '65-70', '70-74', '75-79', 'Over 80']*2,
-        'dose': ['2 Doses']*5 + ['1+ Doses']*5, 
-        'vaccinations': (list(vaccine_age.iloc[0,6:11]) 
+        'dose': ['2 Doses']*5 + ['1+ Doses']*5,
+        'vaccinations': (list(vaccine_age.iloc[0,6:11])
                          + list(vaccine_age.iloc[0,1:6])),
         'population': age_group_pop * 2
     }
 )
 
-vaccine_age['percent'] = (vaccine_age['vaccinations'] 
+vaccine_age['percent'] = (vaccine_age['vaccinations']
                           / vaccine_age['population'] * 100)
 
 # ------------------------------------
@@ -797,9 +797,11 @@ fig.update_layout(
     title=dict(
         text=("<b>% of England's Population Who Have Received At Least 1 Dose "
               "or 2 Doses<br>of Vaccination by Age Group</b><br><sub>Number "
-              "of vaccinations reported as of " 
+              "of vaccinations reported as of "
               + most_recent_thursday.replace("-", " ")
-              + "<br>Source: NHS England"),
+              + "<br><i>Note: age group populations are ONS estimates from "
+              "mid-2019.</i>"
+              "<br>Sources: NHS England, Office for National Statistics"),
         x=0,
         xref='paper',
         y=0.96,
@@ -808,7 +810,7 @@ fig.update_layout(
     ),
     barmode='group',
     height=600,
-    margin=dict(t=110),
+    margin=dict(t=130),
     plot_bgcolor='white',
     xaxis=dict(
         linewidth=2,
