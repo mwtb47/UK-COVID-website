@@ -720,12 +720,12 @@ most_recent_thursday = date_range[date_range.le(date_today)].max()
 most_recent_thursday = most_recent_thursday.strftime("%-d-%B-%Y")
 
 vaccine_age_url = ("https://www.england.nhs.uk/statistics/wp-content/uploads/"
-                  "sites/2/2021/02/COVID-19-weekly-announced-vaccinations-"
-                  + most_recent_thursday + ".xlsx")
+                  "sites/2/2021/03/COVID-19-weekly-announced-vaccinations-"
+                  + most_recent_thursday + "-1.xlsx")
 
 vaccine_age = pd.read_excel(
     vaccine_age_url,
-    sheet_name='Vaccinations by Region & Age',
+    sheet_name='NHS Region',
     skiprows=11,
     usecols='B,D,E,F,G,H,J,K,L,M,N')
 
@@ -799,8 +799,8 @@ fig.update_layout(
               "or 2 Doses<br>of Vaccination by Age Group</b><br><sub>Number "
               "of vaccinations reported as of "
               + most_recent_thursday.replace("-", " ")
-              + "<br><i>Note: age group populations are ONS estimates from "
-              "mid-2019.</i>"
+              + "<br><i>Note: Vaccination totals may exceed ONS mid-2019 age "
+              "group population estimates.</i>"
               "<br>Sources: NHS England, Office for National Statistics"),
         x=0,
         xref='paper',
