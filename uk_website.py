@@ -703,7 +703,8 @@ fig.write_html('graphs/vaccine/daily_vaccinations.html', config=config)
 england = population[population['Name'] == 'ENGLAND']
 
 age_group_pop = [
-    england[england['age'].isin(range(60))]['population'].sum(),
+    england[england['age'].isin(range(55))]['population'].sum(),
+    england[england['age'].isin(range(55, 60))]['population'].sum(),
     england[england['age'].isin(range(60, 65))]['population'].sum(),
     england[england['age'].isin(range(65, 70))]['population'].sum(),
     england[england['age'].isin(range(70, 75))]['population'].sum(),
@@ -728,16 +729,16 @@ vaccine_age = pd.read_excel(
     vaccine_age_url,
     sheet_name='NHS Region',
     skiprows=11,
-    usecols='B,D,E,F,G,H,I,K,L,M,N,O,P')
+    usecols='B,D,E,F,G,H,I,J,L,M,N,O,P,Q,R')
 
 vaccine_age = vaccine_age[vaccine_age['NHS Region of Residence'] == 'Total']
 
 vaccine_age = pd.DataFrame(
     {
-        'age': ['Under 60', '60-65', '65-70', '70-74', '75-79', 'Over 80']*2,
-        'dose': ['2 Doses']*6 + ['1+ Doses']*6,
-        'vaccinations': (list(vaccine_age.iloc[0,7:13])
-                         + list(vaccine_age.iloc[0,1:7])),
+        'age': ['Under 55', '55-59', '60-64', '65-69', '70-74', '75-79', 'Over 80']*2,
+        'dose': ['2 Doses']*7 + ['1+ Doses']*7,
+        'vaccinations': (list(vaccine_age.iloc[0,8:15])
+                         + list(vaccine_age.iloc[0,1:8])),
         'population': age_group_pop * 2
     }
 )
