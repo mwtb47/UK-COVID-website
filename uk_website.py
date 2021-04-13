@@ -469,7 +469,7 @@ vaccine['date'] = pd.to_datetime(vaccine['date'], format='%Y-%m-%d')
 
 vaccine = vaccine[vaccine['date'] >= '2021-01-10'].sort_values('date')
 
-vaccine.columns = ['date', 'area_type', 'area_code', 'area_name',
+vaccine.columns = ['area_code', 'area_name', 'area_type', 'date', 
                    'total_first', 'total_second']
 
 # Create thousand commas separated strings to use in the plots as they
@@ -845,7 +845,7 @@ regional_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=region"
 
 regional = pd.read_csv(regional_url)
 
-regional.columns = ['date', 'area_type', 'area_code', 'area_name', 'specimen',
+regional.columns = ['area_code', 'area_name', 'area_type',  'date', 'specimen',
                     'publish', 'deaths']
 
 regional['date'] = pd.to_datetime(regional['date'], format='%Y-%m-%d')
@@ -1263,7 +1263,7 @@ council_url = ("https://api.coronavirus.data.gov.uk/v2/data?areaType=ltla"
 
 council = pd.read_csv(council_url)
 
-council.columns = ['date', 'area_type', 'area_code', 'area_name', 'publish',
+council.columns = ['area_code', 'area_name', 'area_type', 'date', 'publish',
                    'deaths']
 
 council['date'] = pd.to_datetime(council['date'], format='%Y-%m-%d')
