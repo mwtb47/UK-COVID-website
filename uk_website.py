@@ -633,48 +633,63 @@ fig.write_html('graphs/vaccine/percentage_vaccinated.html', config=config)
 vaccine['daily_1'] = vaccine['total_first'].diff()
 vaccine['daily_2'] = vaccine['total_second'].diff()
 
+# Daily vaccinations 7 day average
+vaccine['daily_1_7_day_avg'] = vaccine['daily_1'].rolling(window=7).mean()
+vaccine['daily_2_7_day_avg'] = vaccine['daily_2'].rolling(window=7).mean()
+
 # Create thousand commas separated strings to use in the plots as they are
 # easier to read.
-cols = ['daily_1', 'daily_2']
-for c in cols:
+for c in ['daily_1', 'daily_2']:
     vaccine[c + '_str'] = [
         "{:,}".format(x).replace(".0", "") for x in vaccine[c]]
-
+for c in ['daily_1_7_day_avg', 'daily_2_7_day_avg']:
+    vaccine[c + '_str'] = [
+        "{:,}".format(round(x, 2)) for x in vaccine[c]]
+    
 fig = go.Figure()
 
-# Daily 1st dose vaccinations
+# Bar chart - daily 1st doses
 fig.add_trace(
-    go.Scatter(
+    go.Bar(
         x=list(vaccine['date']),
         y=list(vaccine['daily_1']),
-        marker=dict(color='rgb(150, 65, 65)'),
-        name='1st Dose',
+        marker=dict(color='rgba(150, 65, 65, 0.3)'),
+        showlegend=False,
         text=vaccine['daily_1_str'],
-        hoverlabel=dict(
-            bgcolor='white',
-            bordercolor='gray',
-            font=dict(
-                color='black'
-            )
-        ),
-        hovertemplate=
-        '<extra></extra>'+
-        '<b>%{x}</b><br>'+
-        '<b>Vaccinations</b>: %{text}'
+        hoverinfo='skip'
     )
 )
 
-# Daily 2nd dose vaccinations
+# Bar chart - daily 2nd doses
+fig.add_trace(
+    go.Bar(
+        x=list(vaccine['date']),
+        y=list(vaccine['daily_2']),
+        marker=dict(color='rgba(0, 0, 100, 0.3)'),
+        showlegend=False,
+        text=vaccine['daily_2_str'],
+        hoverinfo='skip'
+    )
+)
+
+# Line chart - 1st doses 7 day average
 fig.add_trace(
     go.Scatter(
         x=list(vaccine['date']),
-        y=list(vaccine['daily_2']),
-        marker=dict(color='darkblue'),
-        name='2nd Dose',
-        text=vaccine['daily_2_str'],
+        y=list(vaccine['daily_1_7_day_avg']),
+        line=dict(
+            width=3,
+            color='rgb(150, 65, 65)',
+        ),
+        name='1st Dose',
+        customdata=np.stack(
+            (vaccine['daily_1_7_day_avg_str'], 
+             vaccine['daily_1_str']), 
+            axis=-1
+        ),
         hoverlabel=dict(
             bgcolor='white',
-            bordercolor='gray',
+            bordercolor='rgb(150, 65, 65)',
             font=dict(
                 color='black'
             )
@@ -682,13 +697,45 @@ fig.add_trace(
         hovertemplate=
         '<extra></extra>'+
         '<b>%{x}</b><br>'+
-        '<b>Vaccinations</b>: %{text}'
+        '<b>Daily</b>: %{customdata[0]}<br>' + 
+        '<b>7 Day Avg.</b>: %{customdata[1]}'
     )
 )
+
+# Line chart - 2nd doses 7 day average
+fig.add_trace(
+    go.Scatter(
+        x=list(vaccine['date']),
+        y=list(vaccine['daily_2_7_day_avg']),
+        line=dict(
+            width=3,
+            color='darkblue',
+        ),
+        name='2nd Dose',
+        customdata=np.stack(
+            (vaccine['daily_2_7_day_avg_str'], 
+             vaccine['daily_2_str']), 
+            axis=-1
+        ),
+        hoverlabel=dict(
+            bgcolor='white',
+            bordercolor='darkblue',
+            font=dict(
+                color='black'
+            )
+        ),
+        hovertemplate=
+        '<extra></extra>'+
+        '<b>%{x}</b><br>'+
+        '<b>Daily</b>: %{customdata[0]}<br>' + 
+        '<b>7 Day Avg.</b>: %{customdata[1]}'
+    )
+)
+
 
 fig.update_layout(
     template=template,
-    title=("<b>Daily Vaccinations</b>"
+    title=("<b>Vaccinations - Daily and 7 Day Daily Averages</b>"
            "<br><sub>The date is the date the vaccination was reported."
            "<br>Source: gov.uk"),
     margin=dict(t=100)
