@@ -768,10 +768,10 @@ age_group_pop = [
 date_range = pd.Series(pd.date_range('14-01-2021', '31-12-2021', freq='7D'))
 date_today = pd.to_datetime(datetime.date.today())
 most_recent_thursday = date_range[date_range.le(date_today)].max()
-most_recent_thursday = most_recent_thursday.strftime("%-d-%B-%Y")
+most_recent_thursday = most_recent_thursday.strftime("%d-%B-%Y")
 
 vaccine_age_url = ("https://www.england.nhs.uk/statistics/wp-content/uploads/"
-                  "sites/2/2021/04/COVID-19-weekly-announced-vaccinations-"
+                  "sites/2/2021/05/COVID-19-weekly-announced-vaccinations-"
                   + most_recent_thursday + ".xlsx")
 
 vaccine_age = pd.read_excel(
