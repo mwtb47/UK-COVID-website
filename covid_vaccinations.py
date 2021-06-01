@@ -9,20 +9,16 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-class Vaccinations:
-    """Class containing methods to save four graphs as html files:
-        - cumulative total of vaccinations
-        - percentage of population vaccinated
-        - daily vaccinations
-        - percentage of each age group in England vaccinated
+class VaccinationsData:
+    """Class containing methods to prepare data on:
+        - daily vaccination totals
+        - percentage vaccinated by age group
     """
-    def __init__(self, template, plot_config, population):
-        self.template = template
-        self.plot_config = plot_config
+    def __init__(self, population):
         self.population = population
 
     def prepare_vaccination_data(self):
-        """Prepare cases data to be used in graphs."""
+        """Prepare vaccination data for the UK population."""
         vaccine_url = ("https://api.coronavirus.data.gov.uk/v2/"
                        "data?areaType=overview"
                        "&metric=cumPeopleVaccinatedFirstDoseByPublishDate"
@@ -35,8 +31,8 @@ class Vaccinations:
         vaccine.columns = ['area_code', 'area_name', 'area_type', 'date',
                            'total_first', 'total_second']
 
-        # Create thousand-comma-separated strings to use in the plots as they
-        # are easier to read.
+        # Create thousand-comma-separated strings to use in the plots as
+        # they are easier to read.
         cols = ['total_first', 'total_second']
         for c in cols:
             vaccine[c + '_str'] = ["{:,}".format(int(x)) for x in vaccine[c]]
@@ -60,11 +56,12 @@ class Vaccinations:
             vaccine[c + '_str'] = [
                 "{:,}".format(round(x, 2)) for x in vaccine[c]]
 
-        self.vaccine = vaccine
+        return vaccine
 
     def prepare_age_group_vaccine_data(self):
         """Merge vaccination data by age group with the populations of
-        those age groups so a % vaccinated can be plotted.
+        those age groups to give the percentage of each age group which
+        has been vaccinated.
         """
         england = self.population[self.population['Name'] == 'ENGLAND']
 
@@ -132,11 +129,27 @@ class Vaccinations:
         vaccine_age['percent'] = (vaccine_age['vaccinations']
                                   / vaccine_age['population'] * 100)
 
-        self.vaccine_age = vaccine_age
+        return vaccine_age
+
+class PlotVaccinations:
+    """Class containing methods to use the prepared data to save three
+    graphs as html files:
+        - total number vaccinated with 1 or 2 doses in the UK
+        - percentage of each age group vaccinated
+        - daily vaccinations
+    """
+    def __init__(self, data, population, thursday, template, plot_config):
+        self.vaccine = data['vaccine']
+        self.vaccine_age = data['vaccine_age']
+        self.population = population
+        self.recent_thursday = thursday
+        self.template = template
+        self.plot_config = plot_config
+
 
     def graph_vaccine_total(self):
-        """Plot graph cummulative number of people vaccinated with either
-        1 dose or both doses and save as an html file.
+        """Plot graph showing total number of people vaccinated with
+        either 1 dose or both doses and save as an html file.
 
         File name: vaccine_total.html
         """
@@ -475,11 +488,23 @@ class Vaccinations:
                        config=self.plot_config)
 
 
-def main(template, plot_config, population):
-    """Initiate Vaccinations class and run methods to plot graphs."""
-    vaccine = Vaccinations(template, plot_config, population)
-    vaccine.prepare_vaccination_data()
-    vaccine.prepare_age_group_vaccine_data()
+def main(population, template, plot_config):
+    """Initiate VaccinationsData class and run methods to prepare cases
+    data. Then initiate PlotVaccinations class and run methods to plot
+    graphs.
+    """
+    vaccine = VaccinationsData(population)
+    vaccine_df = vaccine.prepare_vaccination_data()
+    vaccine_age = vaccine.prepare_age_group_vaccine_data()
+    thursday = vaccine.recent_thursday
+
+    data = {
+        'vaccine': vaccine_df,
+        'vaccine_age': vaccine_age,
+    }
+
+    vaccine = PlotVaccinations(data, population, thursday, template,
+                               plot_config)
     vaccine.graph_vaccine_total()
     vaccine.graph_percentage_vaccinated()
     vaccine.graph_daily_vaccinations()
