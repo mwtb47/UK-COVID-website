@@ -8,16 +8,13 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-class Deaths:
-    """Class containing methods to save three graphs and one table as
-    html files:
+class DeathsData:
+    """Class containing methods to prepare data on:
         - daily deaths
         - daily deaths by region
-        - table of deaths by council
+        - deaths by council in the past 7 days
     """
-    def __init__(self, template, plot_config, population):
-        self.template = template
-        self.plot_config = plot_config
+    def __init__(self, population):
         self.population = population
 
     def prepare_deaths_data(self):
@@ -39,8 +36,8 @@ class Deaths:
         # 7 day rolling averages for daily deaths
         deaths['deaths_7_day'] = deaths['deaths'].rolling(window=7).mean()
 
-        # Thousand comma separated strings to be displayed in labels on graphs for
-        # easier reading.
+        # Thousand comma separated strings to be displayed in labels on
+        # graphs for easier reading.
         deaths['deaths_str'] = ["{:,}".format(x).replace(".0", "")
                                 for x in deaths['deaths']]
         deaths['deaths_7_day_str'] = ["{:,}".format(round(x, 2))
@@ -51,7 +48,7 @@ class Deaths:
             ['rgba(150, 65, 65, 0.5)'] * (len(deaths.index) - 5)
             + ['rgb(200, 200, 200)'] * 5)
 
-        self.deaths = deaths
+        return deaths
 
     def prepare_regional_deaths_data(self):
         """Download and prepare deaths data for the 9 regions of England.
@@ -92,7 +89,7 @@ class Deaths:
             regional[c + '_str'] = ["{:,}".format(round(x, 2))
                                     for x in regional[c]]
 
-        self.regional_deaths = regional
+        return regional
 
     def prepare_council_deaths_data(self):
         """Download and prepare deaths data for each of England's
@@ -123,8 +120,21 @@ class Deaths:
         council_week['deaths_per_100000'] = (
             council_week['deaths'] / council_week['population'] * 100000)
 
-        self.council_week = council_week
+        return council_week
 
+class PlotDeaths:
+    """Class containing methods to use the prepared data to save two
+    graphs and one table as html files:
+        - daily deaths
+        - daily deaths by region
+        - table of deaths by council
+    """
+    def __init__(self, data, template, plot_config):
+        self.deaths = data['deaths']
+        self.regional_deaths = data['regional']
+        self.council_week = data['council']
+        self.template = template
+        self.plot_config = plot_config
 
     def graph_daily_deaths_uk(self):
         """Plot graph showing daily deaths for all of the UK and save as
@@ -427,12 +437,22 @@ class Deaths:
                          config=table_config)
 
 
-def main(template, plot_config, population):
-    """Initiate Deaths class and run methods to plot graphs."""
-    deaths = Deaths(template, plot_config, population)
-    deaths.prepare_deaths_data()
-    deaths.prepare_regional_deaths_data()
-    deaths.prepare_council_deaths_data()
+def main(population, template, plot_config):
+    """Initiate DeathsData class and run methods to prepare deaths data.
+    Then initiate PlotDeaths class and run methods to plot graphs.
+    """
+    deaths = DeathsData(population)
+    deaths_df = deaths.prepare_deaths_data()
+    regional_df = deaths.prepare_regional_deaths_data()
+    council_df = deaths.prepare_council_deaths_data()
+
+    data = {
+        'deaths': deaths_df,
+        'regional': regional_df,
+        'council': council_df,
+    }
+
+    deaths = PlotDeaths(data, template, plot_config)
     deaths.graph_daily_deaths_uk()
     deaths.graph_region_daily_deaths()
     deaths.table_deaths_local_area()
