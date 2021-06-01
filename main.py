@@ -68,11 +68,11 @@ population = population.melt(
 # function. The second is a list containing the arguments for the main
 # function.
 modules_dict = {
-    'cases': [covid_cases.main, [template, plot_config, population]],
-    'deaths': [covid_deaths.main, [template, plot_config, population]],
+    'cases': [covid_cases.main, [population, template, plot_config]],
+    'deaths': [covid_deaths.main, [population, template, plot_config]],
     'hospital': [covid_hospitalisations.main, [template, plot_config]],
-    'vaccinations': [covid_vaccinations.main,
-                     [template, plot_config, population]],
+    'vaccinations': [covid_vaccinations.main, [population, template,
+                                               plot_config]],
 }
 
 
@@ -89,5 +89,5 @@ def main():
             modules_dict[m][0](*modules_dict[m][1])
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
