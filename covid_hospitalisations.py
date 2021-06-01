@@ -7,15 +7,11 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-class Hospitalisations:
-    """Class containing methods to save two graphs as html files:
+class HospitalData:
+    """Class containing methods to prepare data on:
         - daily hospital admissions with covid-19
         - number of patients in hospital with covid-19
     """
-    def __init__(self, template, plot_config):
-        self.template = template
-        self.plot_config = plot_config
-
     def prepare_hospital_data(self):
         """Prepare hospital data to be used in graphs."""
         hospital_url = ("https://api.coronavirus.data.gov.uk/v2/"
@@ -46,7 +42,18 @@ class Hospitalisations:
         hospital['in_hospital_str'] = [
             "{:,}".format(x).replace(".0", "") for x in hospital['in_hospital']]
 
-        self.hospital = hospital
+        return hospital
+
+class PlotHospital:
+    """Class containing methods to use the prepared data to save two
+    graphs as html files:
+        - daily hospital admissions with covid-19
+        - number of patients in hospital with covid-19
+    """
+    def __init__(self, hospital_df, template, plot_config):
+        self.hospital = hospital_df
+        self.template = template
+        self.plot_config = plot_config
 
     def graph_daily_admissions_uk(self):
         """Plot graph showing daily hospital admissions and save as an
@@ -163,9 +170,12 @@ class Hospitalisations:
 
 
 def main(template, plot_config):
-    """Initiate Hospitalisations class and run methods to plot graphs.
+    """Initiate HopsitalData class and run methods to prepare cases data.
+    Then initiate PlotHospital class and run methods to plot graphs.
     """
-    hospital = Hospitalisations(template, plot_config)
-    hospital.prepare_hospital_data()
+    hospital = HospitalData()
+    hospital_df = hospital.prepare_hospital_data()
+
+    hospital = PlotHospital(hospital_df, template, plot_config)
     hospital.graph_daily_admissions_uk()
     hospital.graph_in_hospital_uk()
