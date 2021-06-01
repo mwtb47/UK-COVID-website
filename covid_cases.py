@@ -8,17 +8,14 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-class Cases:
-    """Class containing methods to save three graphs and one table as
-    html files:
+class CasesData:
+    """Class containing methods to prepare data on:
         - daily cases
         - daily cases by region (publish date)
         - daily cases by region (specimen data)
-        - table of cases by council
+        - cases by council in the past 7 days
     """
-    def __init__(self, template, plot_config, population):
-        self.template = template
-        self.plot_config = plot_config
+    def __init__(self, population):
         self.population = population
 
     def prepare_cases_data(self):
@@ -56,7 +53,7 @@ class Cases:
             ['rgba(150, 65, 65, 0.5)'] * (len(cases.index) - 5)
             + ['rgb(200, 200, 200)'] * 5)
 
-        self.cases = cases
+        return cases
 
     def prepare_regional_cases_data(self):
         """Download and prepare cases data for the 9 regions of England.
@@ -88,8 +85,8 @@ class Cases:
         grouped = regional.groupby('area_name', as_index=False)
         regional = grouped.apply(july_1).reset_index(drop=True)
 
-        # 7 day rolling average for cases by specimen date and publish date, and daily
-        # deaths.
+        # 7 day rolling average for cases by specimen date and publish
+        # date.
         grouped_regions = regional.groupby(['area_name', 'area_code'],
                                            as_index=False)
         grouped_regions = grouped_regions[['specimen', 'publish']]
@@ -119,7 +116,7 @@ class Cases:
             regional[c + '_str'] = ["{:,}".format(round(x, 2))
                                     for x in regional[c]]
 
-        self.regional_cases = regional
+        return regional
 
     def prepare_council_cases_data(self):
         """Download and prepare cases data for each of England's
@@ -150,8 +147,23 @@ class Cases:
         council_week['cases_per_100000'] = (
             council_week['publish'] / council_week['population'] * 100000)
 
-        self.council_week = council_week
+        return council_week
 
+
+class PlotCases:
+    """Class containing methods to use the prepared data to save three
+    graphs and one table as html files:
+        - daily cases
+        - daily cases by region (publish date)
+        - daily cases by region (specimen data)
+        - table of cases by council
+    """
+    def __init__(self, data, template, plot_config):
+        self.cases = data['cases']
+        self.regional_cases = data['regional']
+        self.council_week = data['council']
+        self.template = template
+        self.plot_config = plot_config
 
     def graph_daily_cases_uk(self):
         """Plot graph showing daily cases for all of the UK and save as
@@ -654,12 +666,22 @@ class Cases:
                          config=table_config)
 
 
-def main(template, plot_config, population):
-    """Initiate Cases class and run methods to plot graphs."""
-    cases = Cases(template, plot_config, population)
-    cases.prepare_cases_data()
-    cases.prepare_regional_cases_data()
-    cases.prepare_council_cases_data()
+def main(population, template, plot_config):
+    """Initiate CasesData class and run methods to prepare cases data.
+    Then initiate PlotCases class and run methods to plot graphs.
+    """
+    cases = CasesData(population)
+    cases_df = cases.prepare_cases_data()
+    regional_df = cases.prepare_regional_cases_data()
+    council_df = cases.prepare_council_cases_data()
+
+    data = {
+        'cases': cases_df,
+        'regional': regional_df,
+        'council': council_df,
+    }
+
+    cases = PlotCases(data, template, plot_config)
     cases.graph_daily_cases_uk()
     cases.graph_regional_cases_publish()
     cases.graph_regional_cases_specimen()
