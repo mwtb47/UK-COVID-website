@@ -82,6 +82,12 @@ class VaccinationsData:
             england[england['age'].isin(
                 list(range(80, 90)) + ['90+'])]['population'].sum()
         ]
+        
+        def get_current_month():
+            """The URL for weekly deaths contains the month number in
+            zero-padded format."""
+            current_date = date.today()
+            return current_date.strftime('%m')
 
         def get_recent_thursday():
             """The URL for weekly deaths contains the date that it was
@@ -95,11 +101,12 @@ class VaccinationsData:
                 if day.weekday() == 3:
                     return day.strftime("%d-%B-%Y")
 
+        current_month = get_current_month()
         self.recent_thursday = get_recent_thursday()
         
 
         vaccine_age_url = ("https://www.england.nhs.uk/statistics/wp-content/"
-                           "uploads/sites/2/2021/05/"
+                           "uploads/sites/2/2021/" + current_month + "/"
                            "COVID-19-weekly-announced-vaccinations-"
                            + self.recent_thursday + ".xlsx")
 
