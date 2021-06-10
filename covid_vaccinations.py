@@ -68,7 +68,9 @@ class VaccinationsData:
         # Sum the populations of the age group catergories in which the
         # vaccinations are broken down into.
         age_group_pop = [
-            england[england['age'].isin(range(40))]['population'].sum(),
+            england[england['age'].isin(range(30))]['population'].sum(),
+            england[england['age'].isin(range(30, 35))]['population'].sum(),
+            england[england['age'].isin(range(35, 40))]['population'].sum(),
             england[england['age'].isin(range(40, 45))]['population'].sum(),
             england[england['age'].isin(range(45, 50))]['population'].sum(),
             england[england['age'].isin(range(50, 55))]['population'].sum(),
@@ -94,6 +96,7 @@ class VaccinationsData:
                     return day.strftime("%d-%B-%Y")
 
         self.recent_thursday = get_recent_thursday()
+        
 
         vaccine_age_url = ("https://www.england.nhs.uk/statistics/wp-content/"
                            "uploads/sites/2/2021/05/"
@@ -104,7 +107,7 @@ class VaccinationsData:
             vaccine_age_url,
             sheet_name='NHS Region',
             skiprows=11,
-            usecols='B,D,E,F,G,H,I,J,K,L,M,Q,R,S,T,U,V,W,X,Y,Z')
+            usecols='B,D,E,F,G,H,I,J,K,L,M,N,O,S,T,U,V,W,X,Y,Z,AA,AB,AC,AD')
 
         # Drop NaN values in the region column so that the 'Total' for
         # can be found through a string contains filter. This is needed
@@ -117,11 +120,12 @@ class VaccinationsData:
 
         vaccine_age = pd.DataFrame(
             {
-                'age': ['Under 40', '40-45', '45-49', '50-54', '55-59',
-                        '60-64', '65-69', '70-74', '75-79', 'Over 80'] * 2,
-                'dose': ['2 Doses'] * 10 + ['1+ Doses'] * 10,
-                'vaccinations': (list(vaccine_age.iloc[0,11:21])
-                                 + list(vaccine_age.iloc[0,1:11])),
+                'age': ['Under 30', '30-34', '35-39', '40-45', '45-49', 
+                        '50-54', '55-59', '60-64', '65-69', '70-74', '75-79', 
+                        'Over 80'] * 2,
+                'dose': ['2 Doses'] * 12 + ['1+ Doses'] * 12,
+                'vaccinations': (list(vaccine_age.iloc[0, 13:25])
+                                 + list(vaccine_age.iloc[0, 1:13])),
                 'population': age_group_pop * 2
             }
         )
